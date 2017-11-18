@@ -1,7 +1,7 @@
 ## DLTK Model Zoo
 [![Gitter](https://badges.gitter.im/DLTK/DLTK.svg)](https://gitter.im/DLTK/DLTK?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-![DLTK logo](logo.png)
+![DLTK Model Zoo logo](logo.png) 
 
 ### Referencing and citing methods in the Model Zoo
 To find out how to reference each implementation, please refer to the specifications in the authors' README.md. If you use DLTK in your work please refer to this citation:
