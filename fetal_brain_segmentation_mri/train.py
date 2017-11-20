@@ -15,8 +15,6 @@ from dltk.io.abstract_reader import Reader
 
 from reader import read_fn
 
-#TEST inserting something for flake8 to catch     
-
 
 EVAL_EVERY_N_STEPS = 500
 EVAL_STEPS = 1
