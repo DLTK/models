@@ -12,26 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os, time, math
-import numpy as np, nibabel as nib, pandas as pd
+import os
+import time
+import math
+import numpy as np
+import nibabel as nib
+import pandas as pd
 import tensorflow as tf
-from image_utils import *
+from image_utils import rescale_intensity
 
 
 """ Deployment parameters """
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags._global_parser.add_argument('--seq_name', choices=['sa', 'la_2ch', 'la_4ch'],
+tf.app.flags._global_parser.add_argument('--seq_name',
+                                         choices=['sa', 'la_2ch', 'la_4ch'],
                                          default='sa', help="Sequence name.")
 tf.app.flags.DEFINE_string('test_dir', '/vol/biomedic2/wbai/tmp/github/test',
-                           'Path to the test set directory, under which images are organised in '
-                           'subdirectories for each subject.')
+                           'Path to the test set directory, under which images '
+                           'are organised in subdirectories for each subject.')
 tf.app.flags.DEFINE_string('dest_dir', '/vol/biomedic2/wbai/tmp/github/output',
-                           'Path to the destination directory, where the segmentations will be saved.')
-tf.app.flags.DEFINE_string('model_path', '/vol/biomedic2/wbai/tmp/github/model/FCN_sa.ckpt-50000',
+                           'Path to the destination directory, where the '
+                           'segmentations will be saved.')
+tf.app.flags.DEFINE_string('model_path',
+                           '/vol/biomedic2/wbai/tmp/github/model/FCN_sa.ckpt-50000',
                            'Path to the saved trained model.')
-tf.app.flags.DEFINE_boolean('process_seq', True, "Process a time sequence of images.")
-tf.app.flags.DEFINE_boolean('save_seg', True, "Save segmentation.")
-tf.app.flags.DEFINE_boolean('clinical_measure', True, "Calculate clinical measures.")
+tf.app.flags.DEFINE_boolean('process_seq', True,
+                            'Process a time sequence of images.')
+tf.app.flags.DEFINE_boolean('save_seg', True,
+                            'Save segmentation.')
+tf.app.flags.DEFINE_boolean('clinical_measure', True,
+                            'Calculate clinical measures.')
 
 
 if __name__ == '__main__':
@@ -79,12 +89,15 @@ if __name__ == '__main__':
                 # Prediction (segmentation)
                 pred = np.zeros(image.shape)
 
-                # Pad the image size to be a factor of 16 so that the downsample and upsample procedures
-                # in the network will result in the same image size at each resolution level.
+                # Pad the image size to be a factor of 16 so that the
+                # downsample and upsample procedures in the network will
+                # result in the same image size at each resolution level.
                 X2, Y2 = int(math.ceil(X / 16.0)) * 16, int(math.ceil(Y / 16.0)) * 16
                 x_pre, y_pre = int((X2 - X) / 2), int((Y2 - Y) / 2)
                 x_post, y_post = (X2 - X) - x_pre, (Y2 - Y) - y_pre
-                image = np.pad(image, ((x_pre, x_post), (y_pre, y_post), (0, 0), (0, 0)), 'constant')
+                image = np.pad(image,
+                               ((x_pre, x_post), (y_pre, y_post), (0, 0), (0, 0)),
+                               'constant')
 
                 # Process each time frame
                 for t in range(T):
@@ -95,9 +108,10 @@ if __name__ == '__main__':
 
                     # Evaluate the network
                     prob_fr, pred_fr = sess.run(['prob:0', 'pred:0'],
-                                                feed_dict={'image:0': image_fr, 'training:0': False})
+                                                feed_dict={'image:0': image_fr,
+                                                           'training:0': False})
 
-                    # Transpose and crop the segmentation to recover the original size
+                    # Transpose and crop segmentation to recover the original size
                     pred_fr = np.transpose(pred_fr, axes=(1, 2, 0))
                     pred_fr = pred_fr[x_pre:x_pre + X, y_pre:y_pre + Y]
                     pred[:, :, :, t] = pred_fr
@@ -126,13 +140,20 @@ if __name__ == '__main__':
 
                     nim2 = nib.Nifti1Image(pred, nim.affine)
                     nim2.header['pixdim'] = nim.header['pixdim']
-                    nib.save(nim2, '{0}/seg_{1}.nii.gz'.format(dest_data_dir, FLAGS.seq_name))
+                    nib.save(nim2, '{0}/seg_{1}.nii.gz'.format(dest_data_dir,
+                                                               FLAGS.seq_name))
 
                     for fr in ['ED', 'ES']:
-                        nib.save(nib.Nifti1Image(orig_image[:, :, :, k[fr]], nim.affine),
-                                 '{0}/{1}_{2}.nii.gz'.format(dest_data_dir, FLAGS.seq_name, fr))
-                        nib.save(nib.Nifti1Image(pred[:, :, :, k[fr]], nim.affine),
-                                 '{0}/seg_{1}_{2}.nii.gz'.format(dest_data_dir, FLAGS.seq_name, fr))
+                        nib.save(nib.Nifti1Image(orig_image[:, :, :, k[fr]],
+                                                 nim.affine),
+                                 '{0}/{1}_{2}.nii.gz'.format(dest_data_dir,
+                                                             FLAGS.seq_name,
+                                                             fr))
+                        nib.save(nib.Nifti1Image(pred[:, :, :, k[fr]],
+                                                 nim.affine),
+                                 '{0}/seg_{1}_{2}.nii.gz'.format(dest_data_dir,
+                                                                 FLAGS.seq_name,
+                                                                 fr))
 
                 # Evaluate the clinical measures
                 if FLAGS.seq_name == 'sa' and FLAGS.clinical_measure:
@@ -154,12 +175,18 @@ if __name__ == '__main__':
                     table += [line]
             else:
                 # Process ED and ES time frames
-                image_ED_name = '{0}/{1}_{2}.nii.gz'.format(data_dir, FLAGS.seq_name, 'ED')
-                image_ES_name = '{0}/{1}_{2}.nii.gz'.format(data_dir, FLAGS.seq_name, 'ES')
-                if not os.path.exists(image_ED_name) or not os.path.exists(image_ES_name):
-                    print('  Directory {0} does not contain an image with file name {1} or {2}. '
-                          'Skip.'.format(data_dir, os.path.basename(image_ED_name),
-                                          os.path.basename(image_ES_name)))
+                image_ED_name = '{0}/{1}_{2}.nii.gz'.format(data_dir,
+                                                            FLAGS.seq_name,
+                                                            'ED')
+                image_ES_name = '{0}/{1}_{2}.nii.gz'.format(data_dir,
+                                                            FLAGS.seq_name,
+                                                            'ES')
+                if not os.path.exists(image_ED_name) \
+                        or not os.path.exists(image_ES_name):
+                    print('  Directory {0} does not contain an image with '
+                          'file name {1} or {2}. Skip.'.format(data_dir,
+                                                               os.path.basename(image_ED_name),
+                                                               os.path.basename(image_ES_name)))
                     continue
 
                 measure = {}
@@ -185,7 +212,9 @@ if __name__ == '__main__':
                     X2, Y2 = int(math.ceil(X / 16.0)) * 16, int(math.ceil(Y / 16.0)) * 16
                     x_pre, y_pre = int((X2 - X) / 2), int((Y2 - Y) / 2)
                     x_post, y_post = (X2 - X) - x_pre, (Y2 - Y) - y_pre
-                    image = np.pad(image, ((x_pre, x_post), (y_pre, y_post), (0, 0)), 'constant')
+                    image = np.pad(image,
+                                   ((x_pre, x_post), (y_pre, y_post), (0, 0)),
+                                   'constant')
 
                     # Transpose the shape to NXYC
                     image = np.transpose(image, axes=(2, 0, 1)).astype(np.float32)
@@ -242,10 +271,14 @@ if __name__ == '__main__':
             df.to_csv(csv_name)
 
         if FLAGS.process_seq:
-            print('Average segmentation time = {:.3f}s per sequence'.format(np.mean(table_time)))
+            print('Average segmentation time = {:.3f}s per sequence'.format(
+                np.mean(table_time)))
         else:
-            print('Average segmentation time = {:.3f}s per frame'.format(np.mean(table_time)))
+            print('Average segmentation time = {:.3f}s per frame'.format(
+                np.mean(table_time)))
         process_time = time.time() - start_time
         print('Including image I/O, CUDA resource allocation, '
-              'it took {:.3f}s for processing {:d} subjects ({:.3f}s per subjects).'.format(
-            process_time, len(processed_list), process_time / len(processed_list)))
+              'it took {:.3f}s for processing {:d} subjects '
+              '({:.3f}s per subjects).'.format(process_time,
+                                               len(processed_list),
+                                               process_time / len(processed_list)))

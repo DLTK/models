@@ -27,30 +27,33 @@ def conv2d_bn_relu(x, filters, training, kernel_size=3, strides=1):
 
 def residual_unit(x, filters, training, strides=1):
     """
-        Basic residual learning unit, which implements the unit illustrated by Figure 1(b) in
-          He et al. Identity Mappings in Deep Residual Networks, ECCV 2016.
-          https://arxiv.org/pdf/1603.05027
+        Basic residual learning unit, which implements the unit illustrated
+        by Figure 1(b) in He et al. Identity Mappings in Deep Residual
+        Networks, ECCV 2016. https://arxiv.org/pdf/1603.05027
         """
     orig_x = x
     with tf.name_scope('sub1'):
         x = tf.layers.batch_normalization(x, training=training)
         x = tf.nn.relu(x)
-        x = tf.layers.conv2d(x, filters=filters, kernel_size=3, strides=strides,
+        x = tf.layers.conv2d(x, filters=filters, kernel_size=3,
+                             strides=strides,
                              padding='same', use_bias=False)
     with tf.name_scope('sub2'):
         x = tf.layers.batch_normalization(x, training=training)
         x = tf.nn.relu(x)
-        x = tf.layers.conv2d(x, filters=filters, kernel_size=3, strides=1,
+        x = tf.layers.conv2d(x, filters=filters, kernel_size=3,
+                             strides=1,
                              padding='same', use_bias=False)
-    # Use projection for increased dimension and identity mapping for the same dimension
-    # i.e. option B in
-    #   He at al. Deep Residual Learning for Image Recognition, CVPR 2016.
-    #   https://arxiv.org/pdf/1512.03385
+    # Use projection for increased dimension and identity mapping
+    # for the same dimension i.e. option B in
+    # He at al. Deep Residual Learning for Image Recognition, CVPR 2016.
+    # https://arxiv.org/pdf/1512.03385
     with tf.name_scope('add'):
         if orig_x.shape[3] == x.shape[3] and strides == 1:
             shortcut = orig_x
         else:
-            shortcut = tf.layers.conv2d(orig_x, filters=filters, kernel_size=1, strides=strides,
+            shortcut = tf.layers.conv2d(orig_x, filters=filters,
+                                        kernel_size=1, strides=strides,
                                         padding='same', use_bias=False)
         x = shortcut + x
     return x
@@ -70,23 +73,27 @@ def bottleneck_unit(x, filters, training, strides=1):
     with tf.name_scope('sub1'):
         x = tf.layers.batch_normalization(x, training=training)
         x = tf.nn.relu(x)
-        x = tf.layers.conv2d(x, filters=filters / 4, kernel_size=1, strides=strides,
+        x = tf.layers.conv2d(x, filters=filters / 4, kernel_size=1,
+                             strides=strides,
                              padding='same', use_bias=False)
     with tf.name_scope('sub2'):
         x = tf.layers.batch_normalization(x, training=training)
         x = tf.nn.relu(x)
-        x = tf.layers.conv2d(x, filters=filters / 4, kernel_size=3, strides=1,
+        x = tf.layers.conv2d(x, filters=filters / 4, kernel_size=3,
+                             strides=1,
                              padding='same', use_bias=False)
     with tf.name_scope('sub3'):
         x = tf.layers.batch_normalization(x, training=training)
         x = tf.nn.relu(x)
-        x = tf.layers.conv2d(x, filters=filters, kernel_size=1, strides=1,
+        x = tf.layers.conv2d(x, filters=filters, kernel_size=1,
+                             strides=1,
                              padding='same', use_bias=False)
     with tf.name_scope('add'):
         if orig_x.shape[3] == x.shape[3] and strides == 1:
             shortcut = orig_x
         else:
-            shortcut = tf.layers.conv2d(orig_x, filters=filters, kernel_size=1, strides=strides,
+            shortcut = tf.layers.conv2d(orig_x, filters=filters,
+                                        kernel_size=1, strides=strides,
                                         padding='same', use_bias=False)
         x = shortcut + x
     return x
@@ -116,7 +123,10 @@ def linear_2d(sz):
 def transpose_upsample2d(x, factor, constant=True):
     """ 2D upsampling operator using transposed convolution """
     x_shape = tf.shape(x)
-    output_shape = tf.stack([x_shape[0], x_shape[1] * factor, x_shape[2] * factor, x.shape[3].value])
+    output_shape = tf.stack([x_shape[0],
+                             x_shape[1] * factor,
+                             x_shape[2] * factor,
+                             x.shape[3].value])
 
     # The bilinear interpolation weight for the upsampling filter
     sz = factor * 2 - 1
@@ -133,15 +143,19 @@ def transpose_upsample2d(x, factor, constant=True):
     else:
         filt = tf.Variable(filt_val, dtype=tf.float32)
 
-    # Currently, if output_shape is an unknown shape, conv2d_transpose() will output
-    # an unknown shape during graph construction. This will be a problem for the next step
-    # tf.concat(), which requires a known shape. A workaround is to reshape this tensor to
-    # the expected shape size.
+    # Currently, if output_shape is an unknown shape, conv2d_transpose()
+    # will output an unknown shape during graph construction. This will be
+    # a problem for the next step tf.concat(), which requires a known shape.
+    # A workaround is to reshape this tensor to the expected shape size.
     # Refer to https://github.com/tensorflow/tensorflow/issues/833#issuecomment-278016198
     x_up = tf.nn.conv2d_transpose(x, filter=filt, output_shape=output_shape,
-                                  strides=[1, factor, factor, 1], padding='SAME')
+                                  strides=[1, factor, factor, 1],
+                                  padding='SAME')
     x_out = tf.reshape(x_up,
-                       (x_shape[0], x_shape[1] * factor, x_shape[2] * factor, x.shape[3].value))
+                       (x_shape[0],
+                        x_shape[1] * factor,
+                        x_shape[2] * factor,
+                        x.shape[3].value))
     return x_out
 
 
@@ -157,27 +171,32 @@ def build_FCN(image, n_class, n_level, n_filter, n_block, training, same_dim=32,
     for l in range(0, n_level):
         with tf.name_scope('conv{0}'.format(l)):
             # If this is the first level (l = 0), keep the resolution.
-            # Otherwise, convolve with a stride of 2, i.e. downsample by a factor of 2
+            # Otherwise, convolve with a stride of 2, i.e. downsample
+            # by a factor of 2。
             strides = 1 if l == 0 else 2
             # For each resolution level, perform n_block[l] times convolutions
-            x = conv2d_bn_relu(x, filters=n_filter[l], training=training, kernel_size=3, strides=strides)
+            x = conv2d_bn_relu(x, filters=n_filter[l], training=training,
+                               kernel_size=3, strides=strides)
             for i in range(1, n_block[l]):
-                x = conv2d_bn_relu(x, filters=n_filter[l], training=training, kernel_size=3)
+                x = conv2d_bn_relu(x, filters=n_filter[l], training=training,
+                                   kernel_size=3)
             net['conv{0}'.format(l)] = x
 
-    # Before upsampling back to the original resolution level, map all the feature maps
-    # to have same_dim dimensions. Otherwise, the upsampled feature maps will have both
-    # a large size (e.g. 192 x 192) and a high dimension (e.g. 256 features), which may
-    # exhaust the GPU memory (e.g. 12 GB for Nvidia Titan K80).
+    # Before upsampling back to the original resolution level, map all the
+    # feature maps to have same_dim dimensions. Otherwise, the upsampled
+    # feature maps will have both a large size (e.g. 192 x 192) and a high
+    # dimension (e.g. 256 features), which may exhaust the GPU memory (e.g.
+    # 12 GB for Nvidia Titan K80).
     # Exemplar calculation:
     #   batch size 20 x image size 192 x 192 x feature dimension 256 x floating data type 4
     #   = 755 MB for a feature map
-    #   Apart from this, there is also associated memory of the same size used for gradient
-    #   calculation.
+    #   Apart from this, there is also associated memory of the same size
+    #   used for gradient calculation.
     with tf.name_scope('same_dim'):
         for l in range(0, n_level):
             net['conv{0}_same_dim'.format(l)] = conv2d_bn_relu(net['conv{0}'.format(l)],
-                                                               filters=same_dim, training=training,
+                                                               filters=same_dim,
+                                                               training=training,
                                                                kernel_size=1)
 
     # Upsample the feature maps at each resolution level to the original resolution
@@ -196,10 +215,10 @@ def build_FCN(image, n_class, n_level, n_filter, n_block, training, same_dim=32,
 
     # Perform prediction using the multi-level feature maps
     with tf.name_scope('out'):
-        # We only calculate logits, instead of softmax here because the loss function
-        # tf.nn.softmax_cross_entropy() accepts the unscaled logits and performs softmax
-        # internally for efficiency and numerical stability reasons.
-        # Refer to https://github.com/tensorflow/tensorflow/issues/2462
+        # We only calculate logits, instead of softmax here because the loss
+        # function tf.nn.softmax_cross_entropy() accepts the unscaled logits
+        # and performs softmax internally for efficiency and numerical stability
+        # reasons. Refer to https://github.com/tensorflow/tensorflow/issues/2462
         x = net['concat']
         x = conv2d_bn_relu(x, filters=fc, training=training, kernel_size=1)
         x = conv2d_bn_relu(x, filters=fc, training=training, kernel_size=1)
@@ -211,7 +230,8 @@ def build_ResNet(image, n_class, n_level, n_filter, n_block, training,
                  use_bottleneck=False, same_dim=32, fc=64):
     """
         Build a fully convolutional network with residual learning units
-        for segmenting an input image into n_class classes and return the logits map.
+        for segmenting an input image into n_class classes and return the
+        logits map.
         """
     if use_bottleneck:
         res_func = bottleneck_unit
@@ -230,9 +250,11 @@ def build_ResNet(image, n_class, n_level, n_filter, n_block, training,
     for l in range(0, 2):
         with tf.name_scope('conv{0}'.format(l)):
             strides = 1 if l == 0 else 2
-            x = conv2d_bn_relu(x, filters=n_filter[l], training=training, kernel_size=3, strides=strides)
+            x = conv2d_bn_relu(x, filters=n_filter[l], training=training,
+                               kernel_size=3, strides=strides)
             for i in range(1, n_block[l]):
-                x = conv2d_bn_relu(x, filters=n_filter[l], training=training, kernel_size=3)
+                x = conv2d_bn_relu(x, filters=n_filter[l], training=training,
+                                   kernel_size=3)
             net['conv{0}'.format(l)] = x
 
     for l in range(2, n_level):
@@ -246,8 +268,10 @@ def build_ResNet(image, n_class, n_level, n_filter, n_block, training,
     # to have same_dim dimensions.
     with tf.name_scope('same_dim'):
         for l in range(0, n_level):
-            net['conv{0}_same_dim'.format(l)] = conv2d_bn_relu(net['conv{0}'.format(l)], training=training,
-                                                               filters=same_dim, kernel_size=1)
+            net['conv{0}_same_dim'.format(l)] = conv2d_bn_relu(net['conv{0}'.format(l)],
+                                                               training=training,
+                                                               filters=same_dim,
+                                                               kernel_size=1)
 
     # Upsample the feature maps at each resolution level to the original resolution
     with tf.name_scope('up'):

@@ -16,14 +16,15 @@
     This script demonstrates the segmentation of a test cardiac MR image using
     a pre-trained neural network.
     """
-import os, urllib.request
+import os
+import urllib.request
 
 
 if __name__ == '__main__':
     # Set the GPU device id
     CUDA_VISIBLE_DEVICES = 0
 
-    # Set the seq_name to 'sa', 'la_2ch' or 'la_4ch' for different imaging sequence
+    # Set seq_name to 'sa', 'la_2ch' or 'la_4ch' for different imaging sequence
     for seq_name in ['sa', 'la_2ch', 'la_4ch']:
         print('Demo for {0} imaging sequence ...'.format(seq_name))
 
@@ -50,5 +51,6 @@ if __name__ == '__main__':
         os.system('CUDA_VISIBLE_DEVICES={0} python3 deploy_network.py '
                   '--test_dir demo_image --dest_dir demo_image '
                   '--seq_name {1} --model_path trained_model/FCN_{1} '
-                  '--process_seq --clinical_measures'.format(CUDA_VISIBLE_DEVICES, seq_name))
+                  '--process_seq --clinical_measures'.format(CUDA_VISIBLE_DEVICES,
+                                                             seq_name))
         print('Done.')

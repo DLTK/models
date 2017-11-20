@@ -42,9 +42,13 @@ def crop_image(image, cx, cy, size):
     crop = image[x1_: x2_, y1_: y2_]
     # Pad the image if the specified size is larger than the input image size
     if crop.ndim == 3:
-        crop = np.pad(crop, ((x1_ - x1, x2 - x2_), (y1_ - y1, y2 - y2_), (0, 0)), 'constant')
+        crop = np.pad(crop,
+                      ((x1_ - x1, x2 - x2_), (y1_ - y1, y2 - y2_), (0, 0)),
+                      'constant')
     elif crop.ndim == 4:
-        crop = np.pad(crop, ((x1_ - x1, x2 - x2_), (y1_ - y1, y2 - y2_), (0, 0), (0, 0)), 'constant')
+        crop = np.pad(crop,
+                      ((x1_ - x1, x2 - x2_), (y1_ - y1, y2 - y2_), (0, 0), (0, 0)),
+                      'constant')
     else:
         print('Error: unsupported dimension, crop.ndim = {0}.'.format(crop.ndim))
         exit(0)
@@ -128,12 +132,16 @@ def distance_metric(seg_A, seg_B, dx):
         # The distance is defined only when both contours exist on this slice
         if np.sum(slice_A) > 0 and np.sum(slice_B) > 0:
             # Find contours and retrieve all the points
-            _, contours, _ = cv2.findContours(cv2.inRange(slice_A, 1, 1), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            _, contours, _ = cv2.findContours(cv2.inRange(slice_A, 1, 1),
+                                              cv2.RETR_EXTERNAL,
+                                              cv2.CHAIN_APPROX_NONE)
             pts_A = contours[0]
             for i in range(1, len(contours)):
                 pts_A = np.vstack((pts_A, contours[i]))
 
-            _, contours, _ = cv2.findContours(cv2.inRange(slice_B, 1, 1), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            _, contours, _ = cv2.findContours(cv2.inRange(slice_B, 1, 1),
+                                              cv2.RETR_EXTERNAL,
+                                              cv2.CHAIN_APPROX_NONE)
             pts_B = contours[0]
             for i in range(1, len(contours)):
                 pts_B = np.vstack((pts_B, contours[i]))

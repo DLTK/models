@@ -12,34 +12,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os, time, random
-import numpy as np, nibabel as nib
+import os
+import time
+import random
+import numpy as np
+import nibabel as nib
 import tensorflow as tf
-from network import *
-from image_utils import *
+from network import build_FCN, build_ResNet
+from image_utils import tf_categorical_accuracy, tf_categorical_dice, crop_image, rescale_intensity, data_augmenter
 
 
 """ Training parameters """
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('image_size', 192, 'Image size after cropping.')
-tf.app.flags.DEFINE_integer('train_batch_size', 2, 'Number of images for each training batch.')
-tf.app.flags.DEFINE_integer('validation_batch_size', 2, 'Number of images for each validation batch.')
-tf.app.flags.DEFINE_integer('train_iteration', 50000, 'Number of training iterations.')
-tf.app.flags.DEFINE_integer('num_filter', 16, 'Number of filters for the first convolution layer.')
-tf.app.flags.DEFINE_integer('num_level', 5, 'Number of network levels.')
-tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Learning rate.')
-tf.app.flags._global_parser.add_argument('--seq_name', choices=['sa', 'la_2ch', 'la_4ch'],
+tf.app.flags.DEFINE_integer('image_size', 192,
+                            'Image size after cropping.')
+tf.app.flags.DEFINE_integer('train_batch_size', 2,
+                            'Number of images for each training batch.')
+tf.app.flags.DEFINE_integer('validation_batch_size', 2,
+                            'Number of images for each validation batch.')
+tf.app.flags.DEFINE_integer('train_iteration', 50000,
+                            'Number of training iterations.')
+tf.app.flags.DEFINE_integer('num_filter', 16,
+                            'Number of filters for the first convolution layer.')
+tf.app.flags.DEFINE_integer('num_level', 5,
+                            'Number of network levels.')
+tf.app.flags.DEFINE_float('learning_rate', 1e-3,
+                          'Learning rate.')
+tf.app.flags._global_parser.add_argument('--seq_name',
+                                         choices=['sa', 'la_2ch', 'la_4ch'],
                                          default='sa', help='Sequence name for training.')
-tf.app.flags._global_parser.add_argument('--model', choices=['FCN', 'ResNet'],
+tf.app.flags._global_parser.add_argument('--model',
+                                         choices=['FCN', 'ResNet'],
                                          default='FCN', help='Model name.')
-tf.app.flags._global_parser.add_argument('--optimizer', choices=['Adam', 'SGD', 'Momentum'],
+tf.app.flags._global_parser.add_argument('--optimizer',
+                                         choices=['Adam', 'SGD', 'Momentum'],
                                          default='Adam', help='Optimizer.')
-tf.app.flags.DEFINE_string('dataset_dir', '/vol/medic02/users/wbai/data/cardiac_atlas/UKBB_2964/sa',
-                           'Path to the dataset directory, which is split into training, validation '
-                           'and test subdirectories.')
-tf.app.flags.DEFINE_string('log_dir', '/vol/bitbucket/wbai/tmp/github/log',
+tf.app.flags.DEFINE_string('dataset_dir',
+                           '/vol/medic02/users/wbai/data/cardiac_atlas/UKBB_2964/sa',
+                           'Path to the dataset directory, which is split into '
+                           'training, validation and test subdirectories.')
+tf.app.flags.DEFINE_string('log_dir',
+                           '/vol/bitbucket/wbai/ukbb_cardiac/log',
                            'Directory for saving the log file.')
-tf.app.flags.DEFINE_string('checkpoint_dir', '/vol/bitbucket/wbai/tmp/github/model',
+tf.app.flags.DEFINE_string('checkpoint_dir',
+                           '/vol/bitbucket/wbai/ukbb_cardiac/model',
                            'Directory for saving the trained model.')
 
 
@@ -62,7 +78,8 @@ def get_random_batch(filename_list, batch_size, image_size=192, data_augmentatio
 
             # Handle exceptions
             if image.shape != label.shape:
-                print('Error: mismatched size, image.shape = {0}, label.shape = {1}'.format(image.shape, label.shape))
+                print('Error: mismatched size, image.shape = {0}, '
+                      'label.shape = {1}'.format(image.shape, label.shape))
                 print('Skip {0}, {1}'.format(image_name, label_name))
                 continue
 
@@ -100,7 +117,8 @@ def get_random_batch(filename_list, batch_size, image_size=192, data_augmentatio
     # Perform data augmentation
     if data_augmentation:
         images, labels = data_augmenter(images, labels,
-                                        shift=shift, rotate=rotate, scale=scale,
+                                        shift=shift, rotate=rotate,
+                                        scale=scale,
                                         intensity=intensity, flip=flip)
     return images, labels
 
@@ -119,8 +137,12 @@ def main(argv=None):
             # Check the existence of the image and label map at ED and ES time frames
             # and add their file names to the list
             for fr in ['ED', 'ES']:
-                image_name = '{0}/{1}_{2}.nii.gz'.format(data_dir, FLAGS.seq_name, fr)
-                label_name = '{0}/label_{1}_{2}.nii.gz'.format(data_dir, FLAGS.seq_name, fr)
+                image_name = '{0}/{1}_{2}.nii.gz'.format(data_dir,
+                                                         FLAGS.seq_name,
+                                                         fr)
+                label_name = '{0}/label_{1}_{2}.nii.gz'.format(data_dir,
+                                                               FLAGS.seq_name,
+                                                               fr)
                 if os.path.exists(image_name) and os.path.exists(label_name):
                     data_list[k] += [[image_name, label_name]]
 
@@ -175,12 +197,15 @@ def main(argv=None):
     n_block = []
     if FLAGS.model == 'FCN':
         n_block = [2, 2, 3, 3, 3]
-        logits = build_FCN(image_pl, n_class, n_level=n_level, n_filter=n_filter, n_block=n_block,
+        logits = build_FCN(image_pl, n_class, n_level=n_level,
+                           n_filter=n_filter, n_block=n_block,
                            training=training_pl, same_dim=32, fc=64)
     elif FLAGS.model == 'ResNet':
         n_block = [2, 2, 3, 4, 6]
-        logits = build_ResNet(image_pl, n_class, n_level=n_level, n_filter=n_filter, n_block=n_block,
-                              training=training_pl, use_bottleneck=False, same_dim=32, fc=64)
+        logits = build_ResNet(image_pl, n_class, n_level=n_level,
+                              n_filter=n_filter, n_block=n_block,
+                              training=training_pl, use_bottleneck=False,
+                              same_dim=32, fc=64)
     else:
         print('Error: unknown model {0}.'.format(FLAGS.model))
         exit(0)
@@ -278,7 +303,8 @@ def main(argv=None):
 
             # Stochastic optimisation using this batch
             _, train_loss, train_acc = sess.run([train_op, loss, accuracy],
-                                                {image_pl: images, label_pl: labels, training_pl: True})
+                                                {image_pl: images, label_pl: labels,
+                                                 training_pl: True})
 
             summary = tf.Summary()
             summary.value.add(tag='loss', simple_value=train_loss)
