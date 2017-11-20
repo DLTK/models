@@ -149,7 +149,9 @@ def transpose_upsample2d(x, factor, constant=True):
     # a problem for the next step tf.concat(), which requires a known shape.
     # A workaround is to reshape this tensor to the expected shape size.
     # Refer to https://github.com/tensorflow/tensorflow/issues/833#issuecomment-278016198
-    x_up = tf.nn.conv2d_transpose(x, filter=filt, output_shape=output_shape,
+    x_up = tf.nn.conv2d_transpose(x,
+                                  filter=filt,
+                                  output_shape=output_shape,
                                   strides=[1, factor, factor, 1],
                                   padding='SAME')
     x_out = tf.reshape(x_up,
@@ -176,10 +178,16 @@ def build_FCN(image, n_class, n_level, n_filter, n_block, training, same_dim=32,
             # by a factor of 2。
             strides = 1 if level == 0 else 2
             # For each resolution level, perform n_block[l] times convolutions
-            x = conv2d_bn_relu(x, filters=n_filter[level], training=training,
-                               kernel_size=3, strides=strides)
+            x = conv2d_bn_relu(x,
+                               filters=n_filter[level],
+                               training=training,
+                               kernel_size=3,
+                               strides=strides)
+
             for i in range(1, n_block[level]):
-                x = conv2d_bn_relu(x, filters=n_filter[level], training=training,
+                x = conv2d_bn_relu(x,
+                                   filters=n_filter[level],
+                                   training=training,
                                    kernel_size=3)
             net['conv{0}'.format(level)] = x
 
@@ -195,17 +203,19 @@ def build_FCN(image, n_class, n_level, n_filter, n_block, training, same_dim=32,
     #   used for gradient calculation.
     with tf.name_scope('same_dim'):
         for level in range(0, n_level):
-            net['conv{0}_same_dim'.format(level)] = conv2d_bn_relu(net['conv{0}'.format(level)],
-                                                               filters=same_dim,
-                                                               training=training,
-                                                               kernel_size=1)
+            net['conv{0}_same_dim'.format(level)] = conv2d_bn_relu(
+                net['conv{0}'.format(level)],
+                filters=same_dim,
+                training=training,
+                kernel_size=1)
 
     # Upsample the feature maps at each resolution level to the original resolution
     with tf.name_scope('up'):
         net['conv0_up'] = net['conv0_same_dim']
         for level in range(1, n_level):
-            net['conv{0}_up'.format(level)] = transpose_upsample2d(net['conv{0}_same_dim'.format(level)],
-                                                               factor=int(pow(2, level)))
+            net['conv{0}_up'.format(level)] = transpose_upsample2d(
+                net['conv{0}_same_dim'.format(level)],
+                factor=int(pow(2, level)))
 
     # Concatenate the multi-level feature maps
     with tf.name_scope('concat'):
@@ -251,10 +261,15 @@ def build_ResNet(image, n_class, n_level, n_filter, n_block, training,
     for level in range(0, 2):
         with tf.name_scope('conv{0}'.format(level)):
             strides = 1 if level == 0 else 2
-            x = conv2d_bn_relu(x, filters=n_filter[level], training=training,
-                               kernel_size=3, strides=strides)
+            x = conv2d_bn_relu(x,
+                               filters=n_filter[level],
+                               training=training,
+                               kernel_size=3,
+                               strides=strides)
             for i in range(1, n_block[level]):
-                x = conv2d_bn_relu(x, filters=n_filter[level], training=training,
+                x = conv2d_bn_relu(x,
+                                   filters=n_filter[level],
+                                   training=training,
                                    kernel_size=3)
             net['conv{0}'.format(level)] = x
 
@@ -269,17 +284,19 @@ def build_ResNet(image, n_class, n_level, n_filter, n_block, training,
     # to have same_dim dimensions.
     with tf.name_scope('same_dim'):
         for level in range(0, n_level):
-            net['conv{0}_same_dim'.format(level)] = conv2d_bn_relu(net['conv{0}'.format(level)],
-                                                               training=training,
-                                                               filters=same_dim,
-                                                               kernel_size=1)
+            net['conv{0}_same_dim'.format(level)] = conv2d_bn_relu(
+                net['conv{0}'.format(level)],
+                training=training,
+                filters=same_dim,
+                kernel_size=1)
 
     # Upsample the feature maps at each resolution level to the original resolution
     with tf.name_scope('up'):
         net['conv0_up'] = net['conv0_same_dim']
         for level in range(1, n_level):
-            net['conv{0}_up'.format(level)] = transpose_upsample2d(net['conv{0}_same_dim'.format(level)],
-                                                               factor=int(pow(2, level)))
+            net['conv{0}_up'.format(level)] = transpose_upsample2d(
+                net['conv{0}_same_dim'.format(level)],
+                factor=int(pow(2, level)))
 
     # Concatenate the multi-level feature maps
     with tf.name_scope('concat'):
