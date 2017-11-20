@@ -1,0 +1,16 @@
+language: python
+dist: trusty
+python:
+- 2.7.9
+- 2.7
+- 3.5
+- 3.6
+cache:
+  directories:
+  - "$HOME/.cache/pip"
+install:
+- pip install tensorflow
+- pip install --upgrade pytest
+- pip install git+https://github.com/DLTK/DLTK.git@dev[tests]
+script:
+- pytest --cov dltk --flake8 --cov-append
