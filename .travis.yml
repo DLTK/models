@@ -13,4 +13,4 @@ install:
 - pip install --upgrade pytest
 - pip install -e git+https://github.com/DLTK/DLTK.git@dev#egg=dltk[tests]
 script:
-- pytest --cov dltk --flake8 --cov-append
+- pytest --flake8
