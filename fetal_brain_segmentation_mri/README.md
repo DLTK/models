@@ -3,7 +3,7 @@
 ![Exemplary segmentations](example.png)
 
 ### Contact and referencing this work
-If there are any issues please contact the corresponding author of this implementation, rather than the DLTK maintainers. If you employ this model in your work, please refer to this citation of the [paper](https://arxiv.org/abs/1606.01100), which contains more detailed information on the implementation than the original.
+If there are any issues please contact the corresponding author of this implementation. If you employ this model in your work, please refer to this citation of the [paper](https://arxiv.org/abs/1606.01100), which contains more detailed information on the implementation than the original.
 ```
 @article{rajchl2016learning,
   title={Learning under distributed weak supervision},
@@ -15,8 +15,7 @@ If there are any issues please contact the corresponding author of this implemen
 
 ### Important Notes
 This is a close implementation of the original caffe code, however differs from that described in the paper in the following points:
-- The model was trained on [None, 3, 128, 128, 1] slices, rather than the original code encoding the adjacent slices as channels (i.e. [None, 1, 128, 128, 3] )
-- Adam was employed for optimisation, rather than a momentum SGD optimiser
+- The model was trained on [None, 3, 128, 128, 1] slices, rather than the original code encoding the adjacent slices as channels (i.e. [None, 1, 128, 128, 3])
 - Batch normalisation was employed before each ReLu non-linearity
 
 ### Data
