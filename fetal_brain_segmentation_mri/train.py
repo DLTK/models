@@ -15,7 +15,7 @@ from dltk.io.abstract_reader import Reader
 
 from reader import read_fn
 
-EVAL_EVERY_N_STEPS = 100
+EVAL_EVERY_N_STEPS = 500
 EVAL_STEPS = 1
 
 NUM_CLASSES = 2
