@@ -19,7 +19,8 @@ import numpy as np
 import nibabel as nib
 import tensorflow as tf
 from network import build_FCN, build_ResNet
-from image_utils import tf_categorical_accuracy, tf_categorical_dice, crop_image, rescale_intensity, data_augmenter
+from image_utils import tf_categorical_accuracy, tf_categorical_dice
+from image_utils import crop_image, rescale_intensity, data_augmenter
 
 
 """ Training parameters """
@@ -183,17 +184,21 @@ def main(argv=None):
     n_level = FLAGS.num_level
 
     # The number of filters at each resolution level
-    # Follow the VGG philosophy, increasing the dimension by a factor of 2 for each level
+    # Follow the VGG philosophy, increasing the dimension
+    # by a factor of 2 for each level
     n_filter = []
     for i in range(n_level):
         n_filter += [FLAGS.num_filter * pow(2, i)]
     print('Number of filters at each level =', n_filter)
-    print('Note: The connection between neurons is proportional to n_filter * n_filter. '
-          'Increasing n_filter by a factor of 2 will increase the number of parameters by a factor of 4. '
-          'So it is better to start experiments with a small n_filter and increase it later.')
+    print('Note: The connection between neurons is proportional to '
+          'n_filter * n_filter. Increasing n_filter by a factor of 2 '
+          'will increase the number of parameters by a factor of 4. '
+          'So it is better to start experiments with a small n_filter '
+          'and increase it later.')
 
-    # Build the neural network, which outputs the logits, i.e. the unscaled values just before
-    # the softmax layer, which will then normalise the logits into the probabilities.
+    # Build the neural network, which outputs the logits,
+    # i.e. the unscaled values just before the softmax layer,
+    # which will then normalise the logits into the probabilities.
     n_block = []
     if FLAGS.model == 'FCN':
         n_block = [2, 2, 3, 3, 3]
@@ -218,7 +223,8 @@ def main(argv=None):
 
     # Loss
     label_1hot = tf.one_hot(indices=label_pl, depth=n_class)
-    label_loss = tf.nn.softmax_cross_entropy_with_logits(labels=label_1hot, logits=logits)
+    label_loss = tf.nn.softmax_cross_entropy_with_logits(labels=label_1hot,
+                                                         logits=logits)
     loss = tf.reduce_mean(label_loss)
 
     # Evaluation metrics
@@ -232,7 +238,8 @@ def main(argv=None):
     # Optimiser
     lr = FLAGS.learning_rate
 
-    # We need to add the operators associated with batch_normalization to the optimiser, according to
+    # We need to add the operators associated with batch_normalization
+    # to the optimiser, according to
     # https://www.tensorflow.org/api_docs/python/tf/layers/batch_normalization
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
@@ -244,7 +251,8 @@ def main(argv=None):
             train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
         elif FLAGS.optimizer == 'Momentum':
             print('Using Momentum optimizer with Nesterov momentum.')
-            train_op = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9,
+            train_op = tf.train.MomentumOptimizer(learning_rate=lr,
+                                                  momentum=0.9,
                                                   use_nesterov=True).minimize(loss)
         else:
             print('Error: unknown optimizer {0}.'.format(FLAGS.optimizer))
@@ -252,8 +260,10 @@ def main(argv=None):
 
     # Model name and directory
     model_name = '{0}_{1}_level{2}_filter{3}_{4}_{5}_batch{6}_iter{7}_lr{8}'.format(
-        FLAGS.model, FLAGS.seq_name, n_level, n_filter[0], ''.join([str(x) for x in n_block]),
-        FLAGS.optimizer, FLAGS.train_batch_size, FLAGS.train_iteration, FLAGS.learning_rate)
+        FLAGS.model, FLAGS.seq_name, n_level, n_filter[0],
+        ''.join([str(x) for x in n_block]),
+        FLAGS.optimizer, FLAGS.train_batch_size,
+        FLAGS.train_iteration, FLAGS.learning_rate)
     model_dir = os.path.join(FLAGS.checkpoint_dir, model_name)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
@@ -264,11 +274,14 @@ def main(argv=None):
     csv_name = os.path.join(FLAGS.log_dir, '{0}_log.csv'.format(model_name))
     f_log = open(csv_name, 'w')
     if FLAGS.seq_name == 'sa':
-        f_log.write('iteration,time,train_loss,train_acc,test_loss,test_acc,test_dice_lv,test_dice_myo,test_dice_rv\n')
+        f_log.write('iteration,time,train_loss,train_acc,test_loss,test_acc,'
+                    'test_dice_lv,test_dice_myo,test_dice_rv\n')
     elif FLAGS.seq_name == 'la_2ch':
-        f_log.write('iteration,time,train_loss,train_acc,test_loss,test_acc,test_dice_la\n')
+        f_log.write('iteration,time,train_loss,train_acc,test_loss,test_acc,'
+                    'test_dice_la\n')
     elif FLAGS.seq_name == 'la_4ch':
-        f_log.write('iteration,time,train_loss,train_acc,test_loss,test_acc,test_dice_la,test_dice_ra\n')
+        f_log.write('iteration,time,train_loss,train_acc,test_loss,test_acc,'
+                    'test_dice_la,test_dice_ra\n')
 
     # Start the tensorflow session
     with tf.Session() as sess:
@@ -282,15 +295,17 @@ def main(argv=None):
         summary_dir = os.path.join(FLAGS.log_dir, model_name)
         if os.path.exists(summary_dir):
             os.system('rm -rf {0}'.format(summary_dir))
-        train_writer = tf.summary.FileWriter(os.path.join(summary_dir, 'train'), graph=sess.graph)
-        validation_writer = tf.summary.FileWriter(os.path.join(summary_dir, 'validation'), graph=sess.graph)
+        train_writer = tf.summary.FileWriter(os.path.join(summary_dir, 'train'),
+                                             graph=sess.graph)
+        validation_writer = tf.summary.FileWriter(os.path.join(summary_dir, 'validation'),
+                                                  graph=sess.graph)
 
         # Initialise variables
         sess.run(tf.global_variables_initializer())
 
         # Iterate
         for iteration in range(1, 1 + FLAGS.train_iteration):
-            # For each iteration, we randomly choose a batch of subjects for training
+            # For each iteration, we randomly choose a batch of subjects
             print('Iteration {0}: training...'.format(iteration))
             start_time_iter = time.time()
 
@@ -303,7 +318,8 @@ def main(argv=None):
 
             # Stochastic optimisation using this batch
             _, train_loss, train_acc = sess.run([train_op, loss, accuracy],
-                                                {image_pl: images, label_pl: labels,
+                                                {image_pl: images,
+                                                 label_pl: labels,
                                                  training_pl: True})
 
             summary = tf.Summary()
@@ -322,15 +338,18 @@ def main(argv=None):
                 if FLAGS.seq_name == 'sa':
                     validation_loss, validation_acc, validation_dice_lv, validation_dice_myo, validation_dice_rv = \
                         sess.run([loss, accuracy, dice_lv, dice_myo, dice_rv],
-                                 {image_pl: images, label_pl: labels, training_pl: False})
+                                 {image_pl: images, label_pl: labels,
+                                  training_pl: False})
                 elif FLAGS.seq_name == 'la_2ch':
                     validation_loss, validation_acc, validation_dice_la = \
                         sess.run([loss, accuracy, dice_la],
-                                 {image_pl: images, label_pl: labels, training_pl: False})
+                                 {image_pl: images, label_pl: labels,
+                                  training_pl: False})
                 elif FLAGS.seq_name == 'la_4ch':
                     validation_loss, validation_acc, validation_dice_la, validation_dice_ra = \
                         sess.run([loss, accuracy, dice_la, dice_ra],
-                                 {image_pl: images, label_pl: labels, training_pl: False})
+                                 {image_pl: images, label_pl: labels,
+                                  training_pl: False})
 
                 summary = tf.Summary()
                 summary.value.add(tag='loss', simple_value=validation_loss)
@@ -347,7 +366,8 @@ def main(argv=None):
                 validation_writer.add_summary(summary, iteration)
 
                 # Print the results for this iteration
-                print('Iteration {} of {} took {:.3f}s'.format(iteration, FLAGS.train_iteration,
+                print('Iteration {} of {} took {:.3f}s'.format(iteration,
+                                                               FLAGS.train_iteration,
                                                                time.time() - start_time_iter))
                 print('  training loss:\t\t{:.6f}'.format(train_loss))
                 print('  training accuracy:\t\t{:.2f}%'.format(train_acc * 100))
@@ -366,20 +386,28 @@ def main(argv=None):
                 # Log
                 if FLAGS.seq_name == 'sa':
                     f_log.write('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}\n'.format(
-                        iteration, time.time() - start_time, train_loss, train_acc, validation_loss,
-                        validation_acc, validation_dice_lv, validation_dice_myo, validation_dice_rv))
+                        iteration, time.time() - start_time,
+                        train_loss, train_acc,
+                        validation_loss, validation_acc,
+                        validation_dice_lv, validation_dice_myo,
+                        validation_dice_rv))
                 elif FLAGS.seq_name == 'la_2ch':
                     f_log.write('{0}, {1}, {2}, {3}, {4}, {5}, {6}\n'.format(
-                        iteration, time.time() - start_time, train_loss, train_acc, validation_loss,
-                        validation_acc, validation_dice_la))
+                        iteration, time.time() - start_time,
+                        train_loss, train_acc,
+                        validation_loss, validation_acc,
+                        validation_dice_la))
                 elif FLAGS.seq_name == 'la_4ch':
                     f_log.write('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}\n'.format(
-                        iteration, time.time() - start_time, train_loss, train_acc, validation_loss,
-                        validation_acc, validation_dice_la, validation_dice_ra))
+                        iteration, time.time() - start_time,
+                        train_loss, train_acc,
+                        validation_loss, validation_acc,
+                        validation_dice_la, validation_dice_ra))
                 f_log.flush()
             else:
                 # Print the results for this iteration
-                print('Iteration {} of {} took {:.3f}s'.format(iteration, FLAGS.train_iteration,
+                print('Iteration {} of {} took {:.3f}s'.format(iteration,
+                                                               FLAGS.train_iteration,
                                                                time.time() - start_time_iter))
                 print('  training loss:\t\t{:.6f}'.format(train_loss))
                 print('  training accuracy:\t\t{:.2f}%'.format(train_acc * 100))
@@ -389,7 +417,8 @@ def main(argv=None):
             #   1000 subjects * 2 time frames = 2000 images = 1000 training iterations
             # if one iteration processes 2 images.
             if iteration % 1000 == 0:
-                saver.save(sess, save_path=os.path.join(model_dir, '{0}.ckpt'.format(model_name)), global_step=iteration)
+                saver.save(sess, save_path=os.path.join(model_dir, '{0}.ckpt'.format(model_name)),
+                           global_step=iteration)
 
         # Close the logger and summary writers
         f_log.close()

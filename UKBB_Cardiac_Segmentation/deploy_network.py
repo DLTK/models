@@ -69,8 +69,9 @@ if __name__ == '__main__':
                 image_name = '{0}/{1}.nii.gz'.format(data_dir, FLAGS.seq_name)
 
                 if not os.path.exists(image_name):
-                    print('  Directory {0} does not contain an image with file name {1}. '
-                          'Skip.'.format(data_dir, os.path.basename(image_name)))
+                    print('  Directory {0} does not contain an image with file '
+                          'name {1}. Skip.'.format(data_dir,
+                                                   os.path.basename(image_name)))
                     continue
 
                 # Read the image
@@ -207,8 +208,10 @@ if __name__ == '__main__':
                     # Intensity rescaling
                     image = rescale_intensity(image, (1, 99))
 
-                    # Pad the image size to be a factor of 16 so that the downsample and upsample procedures
-                    # in the network will result in the same image size at each resolution level.
+                    # Pad the image size to be a factor of 16 so that
+                    # the downsample and upsample procedures in the network
+                    # will result in the same image size at each resolution
+                    # level.
                     X2, Y2 = int(math.ceil(X / 16.0)) * 16, int(math.ceil(Y / 16.0)) * 16
                     x_pre, y_pre = int((X2 - X) / 2), int((Y2 - Y) / 2)
                     x_post, y_post = (X2 - X) - x_pre, (Y2 - Y) - y_pre
@@ -222,7 +225,8 @@ if __name__ == '__main__':
 
                     # Evaluate the network
                     prob, pred = sess.run(['prob:0', 'pred:0'],
-                                          feed_dict={'image:0': image, 'training:0': False})
+                                          feed_dict={'image:0': image,
+                                                     'training:0': False})
 
                     # Transpose and crop the segmentation to recover the original size
                     pred = np.transpose(pred, axes=(1, 2, 0))
@@ -242,7 +246,10 @@ if __name__ == '__main__':
 
                         nim2 = nib.Nifti1Image(pred, nim.affine)
                         nim2.header['pixdim'] = nim.header['pixdim']
-                        nib.save(nim2, '{0}/seg_{1}_{2}.nii.gz'.format(dest_data_dir, FLAGS.seq_name, fr))
+                        nib.save(nim2,
+                                 '{0}/seg_{1}_{2}.nii.gz'.format(dest_data_dir,
+                                                                 FLAGS.seq_name,
+                                                                 fr))
 
                     # Evaluate the clinical measures
                     if FLAGS.seq_name == 'sa' and FLAGS.clinical_measure:
@@ -264,7 +271,8 @@ if __name__ == '__main__':
 
         # Save the spreadsheet for the clinical measures
         if FLAGS.seq_name == 'sa' and FLAGS.clinical_measure:
-            column_names = ['LVEDV (mL)', 'LVESV (mL)', 'LVM (g)', 'RVEDV (mL)', 'RVESV (mL)']
+            column_names = ['LVEDV (mL)', 'LVESV (mL)', 'LVM (g)',
+                            'RVEDV (mL)', 'RVESV (mL)']
             df = pd.DataFrame(table, index=processed_list, columns=column_names)
             csv_name = os.path.join(FLAGS.dest_dir, 'clinical_measure.csv')
             print('  Saving clinical measures at {0} ...'.format(csv_name))

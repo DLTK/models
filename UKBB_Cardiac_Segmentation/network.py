@@ -18,7 +18,8 @@ import numpy as np
 
 def conv2d_bn_relu(x, filters, training, kernel_size=3, strides=1):
     """ Basic Conv + BN + ReLU unit """
-    x_conv = tf.layers.conv2d(x, filters=filters, kernel_size=kernel_size, strides=strides,
+    x_conv = tf.layers.conv2d(x, filters=filters, kernel_size=kernel_size,
+                              strides=strides,
                               padding='same', use_bias=False)
     x_bn = tf.layers.batch_normalization(x_conv, training=training)
     x_relu = tf.nn.relu(x_bn)
