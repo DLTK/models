@@ -1,5 +1,6 @@
 ## DLTK Model Zoo
 [![Gitter](https://badges.gitter.im/DLTK/DLTK.svg)](https://gitter.im/DLTK/DLTK?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Build Status](https://travis-ci.org/DLTK/models.svg?branch=master)](https://travis-ci.org/DLTK/models)
 
 ![DLTK Model Zoo logo](logo.jpg) 
 
