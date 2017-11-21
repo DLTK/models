@@ -11,7 +11,7 @@ To find out how to reference each implementation, please refer to the specificat
 @article{pawlowski2017state,
   title={DLTK: State of the Art Reference Implementations for Deep Learning on Medical Images},
   author={Nick Pawlowski and S. Ira Ktena, and Matthew C.H. Lee and Bernhard Kainz and Daniel Rueckert and Ben Glocker and Martin Rajchl},
-  journal={arXiv preprint arXiv:SOME_ID},
+  journal={arXiv preprint arXiv:1711.06853},
   year={2017}
 }
 ```
@@ -34,7 +34,7 @@ We appreciate any contributions to the DLTK and its Model Zoo. If you have impro
 - Standalone problem-specific applications or (re-)implementations of published methods should be committed to the [DLTK Model Zoo](https://github.com/DLTK/models) repo and provide a README.md file with author/coder contact information. 
     
 ### The team
-The DLTK Model Zoo is currently maintained by [@pawni](https://github.com/pawni) and [@mrajchl](https://github.com/mrajchl), with greatly appreciated contributions from [@foo](https://github.com/foo) (alphabetical order).
+The DLTK Model Zoo is currently maintained by [@pawni](https://github.com/pawni) and [@mrajchl](https://github.com/mrajchl), with greatly appreciated contributions from [@baiwenjia](https://github.com/baiwenjia) (alphabetical order).
 
 ### License
 See [LICENSE](https://github.com/DLTK/models/blob/master/LICENSE)
