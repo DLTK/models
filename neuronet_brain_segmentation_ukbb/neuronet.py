@@ -96,6 +96,7 @@ def upscore_layer_3d(inputs,
 
 def neuronet_3d(inputs,
                 num_classes,
+                protocols,
                 num_res_units=2,
                 filters=(16, 32, 64, 128),
                 strides=((1, 1, 1), (2, 2, 2), (2, 2, 2), (2, 2, 2)),
@@ -147,6 +148,7 @@ def neuronet_3d(inputs,
     assert len(strides) == len(filters)
     assert len(inputs.get_shape().as_list()) == 5, \
         'inputs are required to have a rank of 5.'
+    assert len(num_classes) == len(protocols)
 
     conv_params = {'use_bias': use_bias,
                    'kernel_initializer': kernel_initializer,
@@ -193,47 +195,51 @@ def neuronet_3d(inputs,
                     strides=(1, 1, 1),
                     mode=mode)
         res_scales.append(x)
-
+    
         tf.logging.info('Encoder at res_scale {} tensor shape: {}'.format(
             res_scale, x.get_shape()))
-
-    # Upscore layers [2] reconstruct the predictions to higher resolution
-    # scales
+        
+    encoder_out = x 
+    
     tails = []
-    for tail in range(len(self.num_classes)):
-        for res_scale in range(len(filters) - 2, -1, -1):
+    for tail in range(len(protocols)):
+        # Create a separate prediction tail for each labeling protocol to learn
+        with tf.variable_scope('tail_{}'.format(protocols[tail])):
+            x = encoder_out
+            
+            for res_scale in range(len(filters) - 2, -1, -1):
+                # Upscore layers [2] reconstruct the predictions to 
+                # higher resolution scales
+                with tf.variable_scope('upscore_{}'.format(res_scale)):
+                    x = upscore_layer_3d(
+                        inputs=x,
+                        inputs2=res_scales[res_scale],
+                        out_filters=num_classes[tail],
+                        strides=saved_strides[res_scale],
+                        mode=mode,
+                        **conv_params)
 
-            with tf.variable_scope('upscore_{}'.format(res_scale)):
+                tf.logging.info('Decoder at res_scale {} tensor shape: {}'.format(
+                    res_scale, x.get_shape()))
 
-                x = upscore_layer_3d(
-                    inputs=x,
-                    inputs2=res_scales[res_scale],
-                    out_filters=num_classes[tail],
-                    strides=saved_strides[res_scale],
-                    mode=mode,
-                    **conv_params)
-
-            tf.logging.info('Decoder at res_scale {} tensor shape: {}'.format(
-                res_scale, x.get_shape()))
-
-        # Last convolution
-        with tf.variable_scope('last'):
-            tails.append(tf.layers.conv3d(inputs=x,
-                         filters=num_classes[tail],
-                         kernel_size=(1, 1, 1),
-                         strides=(1, 1, 1),
-                         padding='same',
-                         **conv_params))
+            # Last convolution
+            with tf.variable_scope('last'):
+                tails.append(tf.layers.conv3d(inputs=x,
+                             filters=num_classes[tail],
+                             kernel_size=(1, 1, 1),
+                             strides=(1, 1, 1),
+                             padding='same',
+                             **conv_params))
 
     tf.logging.info('Output tensor shape {}'.format(x.get_shape()))
 
     # Define the outputs
-    outputs['logits'] = tails
+    outputs['logits'] = {protocols[i]: tails[i] for i in range(len(protocols))}
+    print(outputs['logits']['fsl_first'])
 
     with tf.variable_scope('pred'):
 
-        outputs['y_prob'] = [tf.nn.softmax(t) for t in tails]
-
-        outputs['y_'] = [tf.argmax(x, axis=-1) if num_classes > 1 else tf.cast(tf.greater_equal(x[..., 0], 0.5), tf.int32) for t in tails]
+        outputs['y_prob'] = {p: tf.nn.softmax(outputs['logits'][p]) for p in protocols}
+        outputs['y_'] = {p: tf.argmax(outputs['logits'][p], axis=-1) for p in protocols}
 
     return outputs

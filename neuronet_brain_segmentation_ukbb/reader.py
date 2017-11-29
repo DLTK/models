@@ -2,8 +2,11 @@ import SimpleITK as sitk
 import tensorflow as tf
 import numpy as np
 
-from dltk.io.augmentation import add_gaussian_offset, flip, extract_class_balanced_example_array
+from dltk.io.augmentation import extract_random_example_array
 from dltk.io.preprocessing import whitening
+
+ALL_PROTOCOLS = ['fsl_fast', 'fsl_first', 'spm_tissue', 'malp_em', 'malp_em_tissue']
+NUM_CLASSES = [4, 16, 4, 139, 6]
 
 def map_labels(lbl, protocol=None, convert_to_protocol=False):
     """
@@ -260,15 +263,6 @@ def read_fn(file_references, mode, params=None):
         dict: A dictionary of reader outputs for dltk.io.abstract_reader.
     """
 
-    def _augment(img, lbl):
-        """An image augmentation function."""
-
-        img = add_gaussian_offset(img, sigma=1.0)
-        for a in range(3):
-            [img, lbl] = flip([img, lbl], axis=a)
-
-        return img, lbl
-
     for f in file_references:
 
         # Read the image nii with sitk
@@ -279,39 +273,44 @@ def read_fn(file_references, mode, params=None):
 
         # Normalise volume image
         img = whitening(img)
-
+        
         # Create a 4D image (i.e. [x, y, z, channels])
-        images = np.expand_dims(img, axis=-1).astype(np.float32)
-
+        img = np.expand_dims(img, axis=-1).astype(np.float32)
+        
         if mode == tf.estimator.ModeKeys.PREDICT:
-            yield {'features': {'x': images}, 'labels': None}
+            yield {'features': {'x': img},
+                   'labels': None}
 
-        # Read the label nii with sitk
-        lbl_fn = f[2]
-        lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(lbl_fn))).astype(np.int32)
+        # Read the label nii with sitk for each of the protocols
+        lbls = []
+        for p in params['protocols']:
+            lbl_fn = f[2 + ALL_PROTOCOLS.index(p)]
+            lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(lbl_fn))).astype(np.int32)
 
-        # Map the label ids to consecutive integers
-        lbl = _map_labels(lbl)
-
-        # Augment if used in training mode
-        if mode == tf.estimator.ModeKeys.TRAIN:
-            images, lbl = _augment(images, lbl)
+            # Map the label ids to consecutive integers
+            lbl = map_labels(lbl, protocol=p)
+            lbls.append(lbl)
 
         # Check if the reader is supposed to return training examples or
-        # full images
+        # full images   
         if params['extract_examples']:
-            images, lbl = extract_class_balanced_example_array(
-                images,
-                lbl,
+            # Concatenate into a list of images and labels and extract
+            img_lbls_list = [img] + lbls
+            img_lbls_list = extract_random_example_array(
+                img_lbls_list,
                 example_size=params['example_size'],
-                n_examples=params['n_examples'], classes=2)
-
+                n_examples=params['n_examples'])
+                        
+            # Yield each image example and corresponding label protocols 
             for e in range(params['n_examples']):
-                yield {'features': {'x': images[e].astype(np.float32)},
-                       'labels': {'y': lbl[e].astype(np.int32)}}
+                yield {'features': {'x': img_lbls_list[0][e].astype(np.float32)},
+                       'labels': {p: img_lbls_list[params['protocols'].index(p) + 1][e]
+                                  for p in params['protocols']}
+                      }
         else:
-            yield {'features': {'x': images},
-                   'labels': {'y': lbl},
+            yield {'features': {'x': img},
+                   'labels': {p: img_lbls_list[params['protocols'].index(p) + 1]
+                                  for p in params['protocols']},
                    'sitk': img_sitk,
                    'img_id': img_id}
     return
