@@ -283,12 +283,13 @@ def read_fn(file_references, mode, params=None):
 
         # Read the label nii with sitk for each of the protocols
         lbls = []
-        for i in range(len(params['protocols'])):
-            lbl_fn = f[2 + i]
+        for p in params['protocols']:
+            idx = ALL_PROTOCOLS.index(p)
+            lbl_fn = f[2 + idx]
             lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(lbl_fn))).astype(np.int32)
 
             # Map the label ids to consecutive integers
-            lbl = map_labels(lbl, protocol=params['protocols'][i])
+            lbl = map_labels(lbl, protocol=p)
             lbls.append(lbl)
 
         # Check if the reader is supposed to return training examples or
