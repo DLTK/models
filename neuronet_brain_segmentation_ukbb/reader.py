@@ -263,7 +263,11 @@ def read_fn(file_references, mode, params=None):
         dict: A dictionary of reader outputs for dltk.io.abstract_reader.
     """
 
-    for f in np.random.shuffle(file_references):
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        np.random.shuffle(file_references)
+    for f in file_references:
+        
+        print(f)
 
         # Read the image nii with sitk
         img_id = f[0]
