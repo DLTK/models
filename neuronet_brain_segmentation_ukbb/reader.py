@@ -265,9 +265,8 @@ def read_fn(file_references, mode, params=None):
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         np.random.shuffle(file_references)
-    for f in file_references:
         
-        print(f)
+    for f in file_references:
 
         # Read the image nii with sitk
         img_id = f[0]
