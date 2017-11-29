@@ -28,8 +28,8 @@ EVAL_STEPS = 10
 
 NUM_CHANNELS = 1
 
-BATCH_SIZE = 4
-SHUFFLE_CACHE_SIZE = 32
+BATCH_SIZE = 1
+SHUFFLE_CACHE_SIZE = 16
 
 MAX_STEPS = 100000
 
@@ -40,10 +40,12 @@ def model_fn(features, labels, mode, params):
     # 1. create a model and its outputs    
     def lrelu(x):
         return leaky_relu(x, 0.1)
+    
+    protocols = params["protocols"]
    
     net_output_ops = neuronet_3d(features['x'],
                                  num_classes=params["num_classes"],
-                                 protocols=params["protocols"],
+                                 protocols=protocols,
                                  num_res_units=params["network"]["num_residual_units"],
                                  filters=params["network"]["filters"],
                                  strides=params["network"]["strides"],
@@ -59,14 +61,13 @@ def model_fn(features, labels, mode, params):
     
     # 2. set up a loss function
     ce = []
-    for p in params["protocols"]:
-        ce.append(tf.reduce_mean(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(
+    for p in protocols:
+        ce.append(tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits=net_output_ops['logits'][p],
                 labels=labels[p])))
 
     # Sum the crossentropy losses and divide through number of protocols to be predicted 
-    loss = tf.div(tf.add_n(ce), tf.constant(len(params["protocols"]), dtype=tf.float32))
+    loss = tf.div(tf.add_n(ce), tf.constant(len(protocols), dtype=tf.float32))
     
     # 3. define a training op and ops for updating moving averages (i.e. for batch normalisation)  
     global_step = tf.train.get_global_step()
@@ -78,23 +79,25 @@ def model_fn(features, labels, mode, params):
     
     # 4.1 (optional) create custom image summaries for tensorboard
     my_image_summaries = {}
-    my_image_summaries['feat_t1'] = features['x'][0,32,:,:,0]
-    for p in params["protocols"]:
-        my_image_summaries['lbl_{}'.format(p)] = tf.cast(labels[p], tf.float32)[0,32,:,:]
-        my_image_summaries['pred_{}'.format(p)] = tf.cast(net_output_ops['y_'][p], tf.float32)[0,32,:,:]
-    
-    [tf.summary.image(name, image) for name, image in my_image_summaries.items()]
+    my_image_summaries['feat_t1'] = features['x'][0,64,:,:,0]
+    for p in protocols:
+        my_image_summaries['{}/lbl'.format(p)] = tf.cast(labels[p], tf.float32)[0,64,:,:]
+        my_image_summaries['{}/pred'.format(p)] = tf.cast(net_output_ops['y_'][p], tf.float32)[0,64,:,:]
+        
+    expected_output_size = [1, 128, 128, 1]  # [B, W, H, C]
+    [tf.summary.image(name, tf.reshape(image, expected_output_size))
+     for name, image in my_image_summaries.items()]
     
     # 4.2 (optional) create custom metric summaries for tensorboard 
-    for i in range(len(params["protocols"])):
-        p = params["protocols"][i]
+    for i in range(len(protocols)):
+        p = protocols[i]
         c = tf.constant(params["num_classes"][i])
         
         mean_dice = tf.reduce_mean(tf.py_func(dice, [net_output_ops['y_'][p], labels[p], c], tf.float32)[1:])
         tf.summary.scalar('dsc_{}'.format(p), mean_dice)
         
     # 5. Return EstimatorSpec object
-    return tf.estimator.EstimatorSpec(mode=mode, predictions=net_output_ops, loss=loss, train_op=train_op, eval_metric_ops=None)
+    return tf.estimator.EstimatorSpec(mode=mode, predictions=net_output_ops['y_'], loss=loss, train_op=train_op, eval_metric_ops=None)
 
 
 def train(args, config):
@@ -116,8 +119,8 @@ def train(args, config):
     
     # Set up a data reader to handle the file i/o. 
     reader_params = {
-        'n_examples': 16,
-        'example_size': [64, 64, 64],
+        'n_examples': 8,
+        'example_size': [128, 128, 128],
         'extract_examples': True,
         'protocols': config["protocols"]}
     
@@ -190,7 +193,7 @@ if __name__ == '__main__':
     #parser.add_argument('--model_path', '-p', default='/tmp/synapse_ct_seg/')
     parser.add_argument('--train_csv', default='train.csv')
     parser.add_argument('--val_csv', default='val.csv')
-    parser.add_argument('--config', default="model_config.json")
+    parser.add_argument('--config', default="config.json")
     
     args = parser.parse_args()
 

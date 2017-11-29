@@ -1,0 +1,11 @@
+{
+ "protocols": ["spm_tissue"],
+ "num_classes": [4], 
+ "model_path": "/vol/biomedic2/mrajchl/data/neuronet/models/spm_tissue/0",
+ "learning_rate": 0.001,
+ "network": {
+     "filters": [16, 32, 64, 128],
+     "strides": [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
+     "num_residual_units": 2
+  }
+}

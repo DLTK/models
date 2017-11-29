@@ -148,7 +148,7 @@ def neuronet_3d(inputs,
     assert len(strides) == len(filters)
     assert len(inputs.get_shape().as_list()) == 5, \
         'inputs are required to have a rank of 5.'
-    assert len(num_classes) == len(protocols)
+    assert len(protocols) == len(num_classes)
 
     conv_params = {'use_bias': use_bias,
                    'kernel_initializer': kernel_initializer,
@@ -172,40 +172,41 @@ def neuronet_3d(inputs,
     # resolution scales res_scales
     res_scales = [x]
     saved_strides = []
-    for res_scale in range(1, len(filters)):
+    with tf.variable_scope('encoder'):
+        for res_scale in range(1, len(filters)):
 
-        # Features are downsampled via strided convolutions. These are defined
-        # in `strides` and subsequently saved
-        with tf.variable_scope('unit_{}_0'.format(res_scale)):
-
-            x = vanilla_residual_unit_3d(
-                inputs=x,
-                out_filters=filters[res_scale],
-                strides=strides[res_scale],
-                mode=mode)
-        saved_strides.append(strides[res_scale])
-
-        for i in range(1, num_res_units):
-
-            with tf.variable_scope('unit_{}_{}'.format(res_scale, i)):
+            # Features are downsampled via strided convolutions. These are defined
+            # in `strides` and subsequently saved
+            with tf.variable_scope('unit_{}_0'.format(res_scale)):
 
                 x = vanilla_residual_unit_3d(
                     inputs=x,
                     out_filters=filters[res_scale],
-                    strides=(1, 1, 1),
+                    strides=strides[res_scale],
                     mode=mode)
-        res_scales.append(x)
-    
-        tf.logging.info('Encoder at res_scale {} tensor shape: {}'.format(
-            res_scale, x.get_shape()))
-        
-    encoder_out = x 
+            saved_strides.append(strides[res_scale])
+
+            for i in range(1, num_res_units):
+
+                with tf.variable_scope('unit_{}_{}'.format(res_scale, i)):
+
+                    x = vanilla_residual_unit_3d(
+                        inputs=x,
+                        out_filters=filters[res_scale],
+                        strides=(1, 1, 1),
+                        mode=mode)
+            res_scales.append(x)
+
+            tf.logging.info('Encoder at res_scale {} tensor shape: {}'.format(
+                res_scale, x.get_shape()))
+
+        outputs['encoder_out'] = x 
     
     tails = []
-    for tail in range(len(protocols)):
+    for tail in range(len(num_classes)):
         # Create a separate prediction tail for each labeling protocol to learn
-        with tf.variable_scope('tail_{}'.format(protocols[tail])):
-            x = encoder_out
+        with tf.variable_scope('tail_{}'.format(tail)):
+            x = outputs['encoder_out']
             
             for res_scale in range(len(filters) - 2, -1, -1):
                 # Upscore layers [2] reconstruct the predictions to 
@@ -234,12 +235,10 @@ def neuronet_3d(inputs,
     tf.logging.info('Output tensor shape {}'.format(x.get_shape()))
 
     # Define the outputs
-    outputs['logits'] = {protocols[i]: tails[i] for i in range(len(protocols))}
-    print(outputs['logits']['fsl_first'])
+    outputs['logits'] = {protocols[i]: tails[i] for i in range(len(tails))}
 
     with tf.variable_scope('pred'):
-
-        outputs['y_prob'] = {p: tf.nn.softmax(outputs['logits'][p]) for p in protocols}
-        outputs['y_'] = {p: tf.argmax(outputs['logits'][p], axis=-1) for p in protocols}
+        outputs['y_prob'] = {protocols[i]: tf.nn.softmax(tails[i]) for i in range(len(tails))}
+        outputs['y_'] = {protocols[i]: tf.argmax(tails[i], axis=-1) for i in range(len(tails))} 
 
     return outputs

@@ -1,0 +1,11 @@
+{
+ "protocols": ["malp_em"],
+ "num_classes": [139], 
+ "model_path": "/vol/biomedic2/mrajchl/data/neuronet/models/malp_em/0",
+ "learning_rate": 0.001,
+ "network": {
+     "filters": [16, 32, 64, 128],
+     "strides": [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
+     "num_residual_units": 2
+  }
+}

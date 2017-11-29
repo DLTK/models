@@ -283,12 +283,12 @@ def read_fn(file_references, mode, params=None):
 
         # Read the label nii with sitk for each of the protocols
         lbls = []
-        for p in params['protocols']:
-            lbl_fn = f[2 + ALL_PROTOCOLS.index(p)]
+        for i in range(len(params['protocols'])):
+            lbl_fn = f[2 + i]
             lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(lbl_fn))).astype(np.int32)
 
             # Map the label ids to consecutive integers
-            lbl = map_labels(lbl, protocol=p)
+            lbl = map_labels(lbl, protocol=params['protocols'][i])
             lbls.append(lbl)
 
         # Check if the reader is supposed to return training examples or
@@ -304,13 +304,13 @@ def read_fn(file_references, mode, params=None):
             # Yield each image example and corresponding label protocols 
             for e in range(params['n_examples']):
                 yield {'features': {'x': img_lbls_list[0][e].astype(np.float32)},
-                       'labels': {p: img_lbls_list[params['protocols'].index(p) + 1][e]
-                                  for p in params['protocols']}
+                       'labels': {params['protocols'][i]: img_lbls_list[1 + i][e]
+                                  for i in range(len(params['protocols']))}
                       }
         else:
             yield {'features': {'x': img},
-                   'labels': {p: img_lbls_list[params['protocols'].index(p) + 1]
-                                  for p in params['protocols']},
+                   'labels': {params['protocols'][i]: img_lbls_list[1 + i][e]
+                                  for i in range(len(params['protocols']))},
                    'sitk': img_sitk,
                    'img_id': img_id}
     return
