@@ -45,10 +45,17 @@ def predict(args):
     y_prob = my_predictor._fetch_tensors['y_prob']
     num_classes = y_prob.get_shape().as_list()[-1]
 
+    if (args.mode == 'TRAIN'):
+        mode = tf.estimator.ModeKeys.TRAIN
+    elif (args.mode == 'EVAL'):
+        mode = tf.estimator.ModeKeys.EVAL
+    elif (args.mode == 'PREDICT'):
+        mode = tf.estimator.ModeKeys.PREDICT
+
     # Iterate through the files, predict on the full volumes and
     #  compute a Dice similariy coefficient
     for output in read_fn(file_references=file_names,
-                          mode=tf.estimator.ModeKeys.EVAL,
+                          mode=mode,
                           params=READER_PARAMS):
 
         t0 = time.time()
@@ -69,7 +76,9 @@ def predict(args):
         pred = np.argmax(pred, -1)
 
         # Calculate the Dice coefficient
-        dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
+        dsc = -1
+        if (args.mode != 'PREDICT'):
+            dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
 
         # Save the file as .nii.gz using the header information from the
         # original sitk image
@@ -93,6 +102,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--model_path', '-p', default='/tmp/fetal_segmentation/')
     parser.add_argument('--csv', default='iFind_fetal.csv')
+    parser.add_argument('--mode', default='EVAL', help='TRAIN, EVAL or PREDICT')
 
     args = parser.parse_args()
 
