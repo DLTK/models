@@ -34,7 +34,7 @@ We appreciate any contributions to the DLTK and its Model Zoo. If you have impro
 - Standalone problem-specific applications or (re-)implementations of published methods should be committed to the [DLTK Model Zoo](https://github.com/DLTK/models) repo and provide a README.md file with author/coder contact information. 
     
 ### The team
-The DLTK Model Zoo is currently maintained by [@pawni](https://github.com/pawni) and [@mrajchl](https://github.com/mrajchl), with greatly appreciated contributions from [@baiwenjia](https://github.com/baiwenjia) (alphabetical order).
+The DLTK Model Zoo is currently maintained by [@pawni](https://github.com/pawni) and [@mrajchl](https://github.com/mrajchl), with greatly appreciated contributions from [@baiwenjia](https://github.com/baiwenjia) [@farrell236](https://github.com/farrell236) (alphabetical order).
 
 ### License
 See [LICENSE](https://github.com/DLTK/models/blob/master/LICENSE)
