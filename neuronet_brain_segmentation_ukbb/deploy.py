@@ -17,7 +17,7 @@ from tensorflow.contrib import predictor
 from dltk.core import metrics as metrics
 from dltk.utils import sliding_window_segmentation_inference
 
-from reader import read_fn
+from reader import read_fn, map_labels
 
 
 def predict(args, config):
@@ -43,9 +43,9 @@ def predict(args, config):
     # Iterate through the files, predict on the full volumes and
     #  compute a Dice similariy coefficient
     for output in read_fn(file_references=file_names,
-                          mode=tf.estimator.ModeKeys.EVAL,
+                          mode=tf.estimator.ModeKeys.PREDICT,
                           params={'extract_examples': False, 
-                                  'protocols': config["protocols"]}):
+                                  'protocols': protocols}):
 
         print('Running file {}'.format(output['img_id']))
         t0 = time.time()
@@ -53,26 +53,29 @@ def predict(args, config):
         # Parse the read function output and add a dummy batch dimension
         #  as required
         img = np.expand_dims(output['features']['x'], axis=0)
-        lbls = [np.expand_dims(output['labels'][p], axis=0) for p in protocols]
-        
-        print('Image shape {}'.format(img.shape))
 
         # Do a sliding window inference with our DLTK wrapper
         preds = sliding_window_segmentation_inference(
             session=my_predictor.session,
             ops_list=y_probs,
             sample_dict={my_predictor._feed_tensors['x']: img},
-            batch_size=2)[0]
+            batch_size=2)
 
         # Calculate the prediction from the probabilities
-        preds = [np.argmax(pred, -1) for pred in preds]
+        preds = [np.squeeze(np.argmax(pred, -1), axis=0) for pred in preds]
+
+        # Map the consecutive integer label ids back to the original ones
+        for i in range(len(protocols)):            
+            preds[i] = map_labels(preds[i],
+                                  protocol=protocols[i],
+                                  convert_to_protocol=True)
 
         # Save the file as .nii.gz using the header information from the
         # original sitk image
         out_folder = os.path.join(config["out_segm_path"], '{}'.format(output['img_id']))
         os.system('mkdir -p {}'.format(out_folder))
-        
-        for i in range(len(protocols)): 
+
+        for i in range(len(protocols)):
             output_fn = os.path.join(out_folder, protocols[i] + '.nii.gz')
             new_sitk = sitk.GetImageFromArray(preds[i].astype(np.int32))
             new_sitk.CopyInformation(output['sitk'])
