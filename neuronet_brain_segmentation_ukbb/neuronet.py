@@ -235,10 +235,11 @@ def neuronet_3d(inputs,
     tf.logging.info('Output tensor shape {}'.format(x.get_shape()))
 
     # Define the outputs
-    outputs['logits'] = {protocols[i]: tails[i] for i in range(len(tails))}
+    for i in range(len(tails)):
+        outputs['logits_{}'.format(protocols[i])] = tails[i]
 
-    with tf.variable_scope('pred'):
-        outputs['y_prob'] = {protocols[i]: tf.nn.softmax(tails[i]) for i in range(len(tails))}
-        outputs['y_'] = {protocols[i]: tf.argmax(tails[i], axis=-1) for i in range(len(tails))} 
+        with tf.variable_scope('pred'):
+            outputs['y_prob_{}'.format(protocols[i])] = tf.nn.softmax(tails[i])
+            outputs['y_{}'.format(protocols[i])] = tf.argmax(tails[i], axis=-1) 
 
     return outputs
