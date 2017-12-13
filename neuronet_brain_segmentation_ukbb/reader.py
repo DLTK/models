@@ -282,7 +282,10 @@ def read_fn(file_references, mode, params=None):
         
         if mode == tf.estimator.ModeKeys.PREDICT:
             yield {'features': {'x': img},
-                   'labels': None}
+                   'labels': None,
+                   'sitk': img_sitk,
+                   'img_id': img_id}
+            continue
 
         # Read the label nii with sitk for each of the protocols
         lbls = []
