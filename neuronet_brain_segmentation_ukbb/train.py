@@ -63,7 +63,7 @@ def model_fn(features, labels, mode, params):
     ce = []
     for p in protocols:
         ce.append(tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits=net_output_ops['logits'][p],
+                logits=net_output_ops['logits_{}'.format(p)],
                 labels=labels[p])))
 
     # Sum the crossentropy losses and divide through number of protocols to be predicted 
@@ -82,7 +82,7 @@ def model_fn(features, labels, mode, params):
     my_image_summaries['feat_t1'] = features['x'][0,64,:,:,0]
     for p in protocols:
         my_image_summaries['{}/lbl'.format(p)] = tf.cast(labels[p], tf.float32)[0,64,:,:]
-        my_image_summaries['{}/pred'.format(p)] = tf.cast(net_output_ops['y_'][p], tf.float32)[0,64,:,:]
+        my_image_summaries['{}/pred'.format(p)] = tf.cast(net_output_ops['y_{}'.format(p)], tf.float32)[0,64,:,:]
         
     expected_output_size = [1, 128, 128, 1]  # [B, W, H, C]
     [tf.summary.image(name, tf.reshape(image, expected_output_size))
@@ -93,11 +93,11 @@ def model_fn(features, labels, mode, params):
         p = protocols[i]
         c = tf.constant(params["num_classes"][i])
         
-        mean_dice = tf.reduce_mean(tf.py_func(dice, [net_output_ops['y_'][p], labels[p], c], tf.float32)[1:])
+        mean_dice = tf.reduce_mean(tf.py_func(dice, [net_output_ops['y_{}'.format(p)], labels[p], c], tf.float32)[1:])
         tf.summary.scalar('dsc_{}'.format(p), mean_dice)
         
     # 5. Return EstimatorSpec object
-    return tf.estimator.EstimatorSpec(mode=mode, predictions=net_output_ops['y_'], loss=loss, train_op=train_op, eval_metric_ops=None)
+    return tf.estimator.EstimatorSpec(mode=mode, predictions=None, loss=loss, train_op=train_op, eval_metric_ops=None)
 
 
 def train(args, config):
@@ -177,8 +177,9 @@ def train(args, config):
         pass
     
     print('Stopping now.')
-    export_dir = nn.export_savedmodel(export_dir_base=config["model_path"],
-                                      serving_input_receiver_fn=reader.serving_input_receiver_fn(reader_example_shapes))
+    export_dir = nn.export_savedmodel(
+        export_dir_base=config["model_path"],
+        serving_input_receiver_fn=reader.serving_input_receiver_fn(reader_example_shapes))
     print('Model saved to {}.'.format(export_dir))
 
         
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     #parser.add_argument('--model_path', '-p', default='/tmp/synapse_ct_seg/')
     parser.add_argument('--train_csv', default='train.csv')
     parser.add_argument('--val_csv', default='val.csv')
-    parser.add_argument('--config', default="config.json")
+    parser.add_argument('--config', default='config.json')
     
     args = parser.parse_args()
 
