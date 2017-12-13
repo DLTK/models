@@ -313,7 +313,7 @@ def read_fn(file_references, mode, params=None):
                       }
         else:
             yield {'features': {'x': img},
-                   'labels': {params['protocols'][i]: img_lbls_list[1 + i][e]
+                   'labels': {params['protocols'][i]: lbls[i]
                                   for i in range(len(params['protocols']))},
                    'sitk': img_sitk,
                    'img_id': img_id}
