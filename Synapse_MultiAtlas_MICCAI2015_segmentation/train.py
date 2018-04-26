@@ -87,7 +87,7 @@ def model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(
             mode=mode, predictions=net_output_ops,
             export_outputs={'out': tf.estimator.export.PredictOutput(
-                    net_output_ops)})
+                net_output_ops)})
 
     # 2. set up a loss function
     if loss_type == 'ce':
@@ -120,7 +120,7 @@ def model_fn(features, labels, mode, params):
     my_image_summaries['feat_t1'] = tf.expand_dims(
         features['x'][:, 0, :, :, 0], 3)
     my_image_summaries['labels'] = tf.expand_dims(
-        tf.cast(labels['y'], tf.float32)[:, 0, :, :],  3)
+        tf.cast(labels['y'], tf.float32)[:, 0, :, :], 3)
     my_image_summaries['predictions'] = tf.expand_dims(
         tf.cast(net_output_ops['y_'], tf.float32)[:, 0, :, :], 3)
 
@@ -165,7 +165,7 @@ def train(args):
         'n_examples': 32,
         'example_size': [64, 64, 64],
         'extract_examples': True
-        }
+    }
 
     reader_example_shapes = {
         'features': {'x': reader_params['example_size'] + [NUM_CHANNELS, ]},
@@ -221,7 +221,7 @@ def train(args):
                 hooks=[val_qinit_hook, val_summary_hook],
                 steps=EVAL_STEPS)
             print('Step = {}; val loss = {:.5f};'.format(
-                    results_val['global_step'], results_val['loss']))
+                results_val['global_step'], results_val['loss']))
 
     except KeyboardInterrupt:
         pass

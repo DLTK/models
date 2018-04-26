@@ -54,7 +54,7 @@ def predict(args):
         img = np.expand_dims(output['features']['x'], axis=0)
 
         print('running inference on {} with img {} and op {}'.format(
-                my_predictor._feed_tensors['x'], img.shape, y_prob))
+            my_predictor._feed_tensors['x'], img.shape, y_prob))
         # Do a sliding window inference with our DLTK wrapper
         pred = sliding_window_segmentation_inference(
             session=my_predictor.session,

@@ -15,9 +15,9 @@ def resample_img(itk_image, out_spacing=[2.0, 2.0, 2.0], is_label=False):
     original_size = itk_image.GetSize()
 
     out_size = [
-        int(np.round(original_size[0]*(original_spacing[0]/out_spacing[0]))),
-        int(np.round(original_size[1]*(original_spacing[1]/out_spacing[1]))),
-        int(np.round(original_size[2]*(original_spacing[2]/out_spacing[2])))]
+        int(np.round(original_size[0] * (original_spacing[0] / out_spacing[0]))),
+        int(np.round(original_size[1] * (original_spacing[1] / out_spacing[1]))),
+        int(np.round(original_size[2] * (original_spacing[2] / out_spacing[2])))]
 
     resample = sitk.ResampleImageFilter()
     resample.SetOutputSpacing(out_spacing)
@@ -72,7 +72,7 @@ def split_data(files, path, no_split=True, no_label=False):
                       for f in train]
         if not no_label:
             train_lbls = [os.path.join(
-                    path, 'label', 'label{}.nii.gz'.format(f)) for f in train]
+                path, 'label', 'label{}.nii.gz'.format(f)) for f in train]
 
             pd.DataFrame(data={'imgs': train_imgs, 'lbls': train_lbls}).to_csv(
                 'train.csv', index=False)
@@ -120,7 +120,7 @@ def preprocess(args):
             nii_l1 = sitk.ReadImage(l1)
             res_nii_l1 = resample_img(nii_l1, is_label=True)
             sitk.WriteImage(res_nii_l1, os.path.join(
-                    args.output_path, 'label', 'label{}.nii.gz'.format(fid)))
+                args.output_path, 'label', 'label{}.nii.gz'.format(fid)))
 
 
 if __name__ == '__main__':
