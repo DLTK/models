@@ -14,7 +14,8 @@ If there are any issues please contact the corresponding author of this implemen
 ```
 
 ### Important Notes
-- Batch normalisation was employed before each ReLu non-linearity
+- The original model was trained with DLTK 0.1 which had a slightly different U-Net implementation. We provide the original model and training scripts to closely replicate this.
+- We originally trained with `batch_size=8` which requires > 12GB GPU memory. We therefore decreased the batch size of the uploaded script to 4.
 
 ### Data
 The data can be downloaded after registration from the [challenge website](http://synapse.org/#!Synapse:syn3193805/wiki/217785).
