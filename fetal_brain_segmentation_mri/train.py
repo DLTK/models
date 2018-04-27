@@ -184,7 +184,7 @@ def train(args):
                 results_val = nn.evaluate(
                     input_fn=val_input_fn,
                     hooks=[val_qinit_hook, val_summary_hook],
-                    steps=EVAL_STEPS*EVAL_STEPS)
+                    steps=EVAL_STEPS * EVAL_STEPS)
                 print('Step = {}; val loss = {:.5f};'.format(
                     results_val['global_step'], results_val['loss']))
 

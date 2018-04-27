@@ -79,7 +79,7 @@ def fetal_fcn_3d(inputs,
             with tf.variable_scope('pool_{}'.format(res_scale)):
                 x = pool_op(
                     inputs=x,
-                    pool_size=[2*s for s in strides[res_scale]],
+                    pool_size=[2 * s for s in strides[res_scale]],
                     strides=strides[res_scale],
                     padding=padding)
 

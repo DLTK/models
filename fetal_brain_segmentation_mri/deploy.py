@@ -91,7 +91,7 @@ def predict(args):
 
         # Print outputs
         print('Dice={}; input_dim={}; time={}; output_fn={};'.format(
-            dsc, img.shape, time.time()-t0, output_fn))
+            dsc, img.shape, time.time() - t0, output_fn))
 
 
 if __name__ == '__main__':
