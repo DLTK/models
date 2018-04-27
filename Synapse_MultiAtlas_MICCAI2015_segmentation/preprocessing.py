@@ -4,7 +4,6 @@ import pandas as pd
 import SimpleITK as sitk
 import numpy as np
 import os
-from tqdm import tqdm
 import argparse
 
 
@@ -98,14 +97,14 @@ def preprocess(args):
 
     split_data(files, args.output_path, args.no_split, args.no_label)
 
-    if not os.path.exists(os.path.join(args.data_path, 'img')):
-        os.makedirs(os.path.join(args.data_path, 'img'))
+    if not os.path.exists(os.path.join(args.output_path, 'img')):
+        os.makedirs(os.path.join(args.output_path, 'img'))
 
     if not args.no_label:
-        if not os.path.exists(os.path.join(args.data_path, 'label')):
-            os.makedirs(os.path.join(args.data_path, 'label'))
+        if not os.path.exists(os.path.join(args.output_path, 'label')):
+            os.makedirs(os.path.join(args.output_path, 'label'))
 
-    for f in tqdm(files):
+    for f in files:
         fid = f[3:7]
         f1 = os.path.join(args.data_path, 'img', f)
 
