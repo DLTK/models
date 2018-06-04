@@ -108,16 +108,19 @@ def neuronet_3d(inputs,
                 kernel_regularizer=None,
                 bias_regularizer=None):
     """
-    Image segmentation network based on an FCN architecture [1] using
-    residual units [2] as feature extractors. Downsampling and upsampling
-    of features is done via strided convolutions and transpose convolutions,
-    respectively. On each resolution scale s are num_residual_units with
-    filter size = filters[s]. strides[s] determine the downsampling factor
-    at each resolution scale.
+    NeuroNet [1] is a multi-task image segmentation network based on an FCN 
+    architecture [2] using residual units [3] as feature extractors. 
+    Downsampling and upsampling of features is done via strided convolutions 
+    and transpose convolutions, respectively. On each resolution scale s 
+    are num_residual_units with filter size = filters[s]. strides[s] determine
+    the downsampling factor at each resolution scale.
+    
+    [1] M. Rajchl et al. NeuroNet: Fast and Robust Reproduction of Multiple 
+        Brain Image Segmentation Pipelines. MIDL 2018.
 
-    [1] J. Long et al. Fully convolutional networks for semantic segmentation.
+    [2] J. Long et al. Fully convolutional networks for semantic segmentation.
         CVPR 2015.
-    [2] K. He et al. Identity Mappings in Deep Residual Networks. ECCV 2016.
+    [3] K. He et al. Identity Mappings in Deep Residual Networks. ECCV 2016.
 
     Args:
         inputs (tf.Tensor): Input feature tensor to the network (rank 5
