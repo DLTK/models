@@ -84,7 +84,8 @@ def read_fn(file_references, mode, params=None):
         images = np.expand_dims(img, axis=-1).astype(np.float32)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            yield {'features': {'x': images}, 'labels': None}
+            yield {'features': {'x': images}, 'labels': {'y': np.array([0])}, 'sitk': img_sitk, 'img_id': img_id}
+            continue
 
         # Read the label nii with sitk
         lbl_fn = f[2]

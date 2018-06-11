@@ -1,0 +1,9 @@
+{
+  "net": "asym_unet",
+  "opt": "rmsprop",
+  "filters": [16, 64, 128, 256, 512],
+  "strides": [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [1, 1, 1]],
+  "num_residual_units": 3,
+  "loss": "ce",
+  "learning_rate": 0.001
+}

@@ -31,33 +31,57 @@ iFIND00018,/vol/biomedic2/mrajchl/data/iFind2_db/imgs/iFIND00018.nii.gz,/vol/bio
 ...
 ```
 
-These are parsed and extract tf.Tensor examples for training and evaluation in `reader.py` using a [SimpleITK](http://www.simpleitk.org/) for i/o of the .nii files:
+These are parsed and extract tf.Tensor examples for training and evaluation in `reader.py` using a [SimpleITK](http://www.simpleitk.org/) for i/o of the .nii files.
 
 
-### Training
-![Dice_similarity_coefficient](dsc.png)
+### Usage
+- You can download a pre-trained model for fine-tuning or deployment [here](https://www.doc.ic.ac.uk/~mrajchl/dltk_models/model_zoo/fetal_brain_segmentation_mri.tar.gz). 
+The archive contains both the tf.estimator export folder and the standard 
+.index, .meta and .data-* files for continuing training. Extract the model 
+folder from the .tar.gz file and point your ```--model_path``` MY_MODEL_PATH 
+argument to its location (see below). 
 
-To train a new model, run the train.py script:
-
-  ```
-  python -u train.py MY_OPTIONS
-  ```
-
-### Monitoring
-
-For monitoring and metric tracking, spawn a tensorboard webserver and point the log directory to the model save_path:
+- To train a new model, run the train.py script. Display run options with
+  ``` python train.py --help ```:  
 
   ```
-  tensorboard --logdir /tmp/fetal_brain_segmentation/
+  usage: train.py [-h] [--run_validation RUN_VALIDATION] [--restart] [--verbose]
+                    [--cuda_devices CUDA_DEVICES] [--model_path MODEL_PATH]
+                    [--data_csv DATA_CSV]  
+  ``` 
+  
+  To start training, run the training script with the desired options:  
 
+  ```
+  python train.py MY_OPTIONS
+  ```
+
+  The model and training events will be saved to a ```model_path``` 
+  MY_MODEL_PATH
+
+- For monitoring and metric tracking, spawn a tensorboard webserver and point
+ the log directory to MY_MODEL_PATH:
+
+  ```
+  tensorboard --logdir MY_MODEL_PATH
   ```
   
-### Deploy
+  ![Dice_similarity_coefficient](dsc.png)
+  
 
-To deploy a model and run inference, run the deploy.py script and point to the model save_path:
+- To deploy a model and run inference, run the deploy.py script and point to 
+the trained model:
 
   ```
-  python -u deploy.py --save_path /tmp/mrbrains_segmentation/ MY_OPTIONS
+  python -u deploy.py --model_path MY_MODEL_PATH
   ```
-
-Please note, that this implementation imports saved models via [tf.estimator.Estimator.export_savedmodel](https://www.tensorflow.org/api_docs/python/tf/estimator/Estimator#export_savedmodel) and during deploy parses the model_path for a subfolder containing such data. 
+  
+  Note that during deploy we average the predictions of 4 random crops of a test input, so results may vary a bit from run to run. The expected output of deploy should look similar to the one below and yield a test Dice of approximately 0.924 +/- 0.022:
+  
+  ```
+    Loading from .../1511556748
+    Dice=0.94843941927; input_dim=(1, 120, 336, 336, 1); time=17.9820091724; output_fn=.../iFIND00031.nii.gz;
+    Dice=0.951662540436; input_dim=(1, 170, 336, 336, 1); time=22.7679200172; output_fn=.../iFIND00035.nii.gz;
+    ...
+  ```
+  
