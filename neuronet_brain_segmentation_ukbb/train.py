@@ -121,7 +121,7 @@ def train(args, config):
         'protocols': config["protocols"]}
 
     reader_example_shapes = {
-        'features': {'x': reader_params['example_size'] + [NUM_CHANNELS,]}, 
+        'features': {'x': reader_params['example_size'] + [NUM_CHANNELS, ]},
         'labels': {p: reader_params['example_size'] for p in config["protocols"]}}
 
     reader = Reader(read_fn,
