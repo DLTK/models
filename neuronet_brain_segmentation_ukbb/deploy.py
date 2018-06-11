@@ -88,11 +88,10 @@ def predict(args, config):
 
 if __name__ == '__main__':
     # Set up argument parser
-    parser = argparse.ArgumentParser(description='iFind2 fetal segmentation deploy script')
+    parser = argparse.ArgumentParser(description='Neuronet deploy script')
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='0')
 
-    #parser.add_argument('--model_path', '-p', default='/tmp/fetal_segmentation/')
     parser.add_argument('--csv', default='test.csv')
     parser.add_argument('--config', default='config.json')
 

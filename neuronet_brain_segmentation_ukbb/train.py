@@ -186,12 +186,11 @@ def train(args, config):
 if __name__ == '__main__':
 
     # Set up argument parser
-    parser = argparse.ArgumentParser(description='UK Biobank NeuroNet training')
+    parser = argparse.ArgumentParser(description='NeuroNet training script')
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='0')
     
-    #parser.add_argument('--model_path', '-p', default='/tmp/synapse_ct_seg/')
     parser.add_argument('--train_csv', default='train.csv')
     parser.add_argument('--val_csv', default='val.csv')
     parser.add_argument('--config', default='config.json')
