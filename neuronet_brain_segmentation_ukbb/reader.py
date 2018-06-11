@@ -8,6 +8,7 @@ from dltk.io.preprocessing import whitening
 ALL_PROTOCOLS = ['fsl_fast', 'fsl_first', 'spm_tissue', 'malp_em', 'malp_em_tissue']
 NUM_CLASSES = [4, 16, 4, 139, 6]
 
+
 def map_labels(lbl, protocol=None, convert_to_protocol=False):
     """
         Map dataset specific label id protocols to consecutive integer ids for training and back.
@@ -29,8 +30,7 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         3 WM
     """
     spm_tissue_ids = range(4)
-    
-        
+
     """
         Fast ids:
         0 Background
@@ -39,8 +39,7 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         3 WM
     """
     fast_ids = range(4)
-    
-    
+
     """
         First ids:
         0 Background
@@ -58,11 +57,10 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         52 Right-Pallidum 40
         53 Right-Hippocampus 30
         54 Right-Amygdala 50
-        58 Right-Accumbens-area 50 
+        58 Right-Accumbens-area 50
     """
     first_ids = [0, 10, 11, 12, 13, 16, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58]
-    
-    
+
     """
         MALP-EM tissue ids:
         0 Background
@@ -70,10 +68,9 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         2 Sub-cortical and cerebellum GM
         3 WM
         4 Cortical GM
-        5 ?????
+        5
     """
     malpem_tissue_ids = range(6)
-    
         
     """
         MALP-EM ids:
@@ -218,9 +215,9 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         138 LeftTTG Transversetemporalgyrus Left
     """
     malpem_ids = range(139)
-    
+
     out_lbl = np.zeros_like(lbl)
-    
+
     if protocol == 'fsl_fast':
         ids = fast_ids
     elif protocol == 'fsl_first':
@@ -234,7 +231,7 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
     else:
         print("Method is not recognised. Exiting.")
         return -1
-    
+
     if convert_to_protocol:
         # map from consecutive ints to protocol labels
         for i in range(len(ids)):
@@ -243,7 +240,7 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         # map from protocol labels to consecutive ints
         for i in range(len(ids)):
             out_lbl[lbl==ids[i]] = i
-            
+
     return out_lbl
 
 def read_fn(file_references, mode, params=None):
@@ -276,10 +273,10 @@ def read_fn(file_references, mode, params=None):
 
         # Normalise volume image
         img = whitening(img)
-        
+
         # Create a 4D image (i.e. [x, y, z, channels])
         img = np.expand_dims(img, axis=-1).astype(np.float32)
-        
+
         if mode == tf.estimator.ModeKeys.PREDICT:
             yield {'features': {'x': img},
                    'labels': None,
@@ -299,7 +296,7 @@ def read_fn(file_references, mode, params=None):
             lbls.append(lbl)
 
         # Check if the reader is supposed to return training examples or
-        # full images   
+        # full images
         if params['extract_examples']:
             # Concatenate into a list of images and labels and extract
             img_lbls_list = [img] + lbls
@@ -312,8 +309,7 @@ def read_fn(file_references, mode, params=None):
             for e in range(params['n_examples']):
                 yield {'features': {'x': img_lbls_list[0][e].astype(np.float32)},
                        'labels': {params['protocols'][i]: img_lbls_list[1 + i][e]
-                                  for i in range(len(params['protocols']))}
-                      }
+                                  for i in range(len(params['protocols']))}}
         else:
             yield {'features': {'x': img},
                    'labels': {params['protocols'][i]: lbls[i]

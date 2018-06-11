@@ -108,14 +108,14 @@ def neuronet_3d(inputs,
                 kernel_regularizer=None,
                 bias_regularizer=None):
     """
-    NeuroNet [1] is a multi-task image segmentation network based on an FCN 
-    architecture [2] using residual units [3] as feature extractors. 
-    Downsampling and upsampling of features is done via strided convolutions 
-    and transpose convolutions, respectively. On each resolution scale s 
+    NeuroNet [1] is a multi-task image segmentation network based on an FCN
+    architecture [2] using residual units [3] as feature extractors.
+    Downsampling and upsampling of features is done via strided convolutions
+    and transpose convolutions, respectively. On each resolution scale s
     are num_residual_units with filter size = filters[s]. strides[s] determine
     the downsampling factor at each resolution scale.
-    
-    [1] M. Rajchl et al. NeuroNet: Fast and Robust Reproduction of Multiple 
+
+    [1] M. Rajchl et al. NeuroNet: Fast and Robust Reproduction of Multiple
         Brain Image Segmentation Pipelines. MIDL 2018.
 
     [2] J. Long et al. Fully convolutional networks for semantic segmentation.
@@ -203,16 +203,16 @@ def neuronet_3d(inputs,
             tf.logging.info('Encoder at res_scale {} tensor shape: {}'.format(
                 res_scale, x.get_shape()))
 
-        outputs['encoder_out'] = x 
-    
+        outputs['encoder_out'] = x
+
     tails = []
     for tail in range(len(num_classes)):
         # Create a separate prediction tail for each labeling protocol to learn
         with tf.variable_scope('tail_{}'.format(tail)):
             x = outputs['encoder_out']
-            
+
             for res_scale in range(len(filters) - 2, -1, -1):
-                # Upscore layers [2] reconstruct the predictions to 
+                # Upscore layers [2] reconstruct the predictions to
                 # higher resolution scales
                 with tf.variable_scope('upscore_{}'.format(res_scale)):
                     x = upscore_layer_3d(
@@ -243,6 +243,6 @@ def neuronet_3d(inputs,
 
         with tf.variable_scope('pred'):
             outputs['y_prob_{}'.format(protocols[i])] = tf.nn.softmax(tails[i])
-            outputs['y_{}'.format(protocols[i])] = tf.argmax(tails[i], axis=-1) 
+            outputs['y_{}'.format(protocols[i])] = tf.argmax(tails[i], axis=-1)
 
     return outputs

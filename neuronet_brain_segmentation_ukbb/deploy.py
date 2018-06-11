@@ -14,7 +14,6 @@ import json
 
 from tensorflow.contrib import predictor
 
-from dltk.core import metrics as metrics
 from dltk.utils import sliding_window_segmentation_inference
 
 from reader import read_fn, map_labels
@@ -34,17 +33,17 @@ def predict(args, config):
                   if os.path.isdir(os.path.join(config["model_path"], o)) and o.isdigit()][-1]
     print('Loading from {}'.format(export_dir))
     my_predictor = predictor.from_saved_model(export_dir)
-    
+
     protocols = config["protocols"]
     # Fetch the output probability ops of the trained network
     y_probs = [my_predictor._fetch_tensors['y_prob_{}'.format(p)] for p in protocols]
-    num_classes = [yp.get_shape().as_list()[-1] for yp in y_probs]
-    
+
+
     # Iterate through the files, predict on the full volumes and
     #  compute a Dice similariy coefficient
     for output in read_fn(file_references=file_names,
                           mode=tf.estimator.ModeKeys.PREDICT,
-                          params={'extract_examples': False, 
+                          params={'extract_examples': False,
                                   'protocols': protocols}):
 
         print('Running file {}'.format(output['img_id']))
@@ -65,7 +64,7 @@ def predict(args, config):
         preds = [np.squeeze(np.argmax(pred, -1), axis=0) for pred in preds]
 
         # Map the consecutive integer label ids back to the original ones
-        for i in range(len(protocols)):            
+        for i in range(len(protocols)):
             preds[i] = map_labels(preds[i],
                                   protocol=protocols[i],
                                   convert_to_protocol=True)
@@ -76,14 +75,14 @@ def predict(args, config):
         os.system('mkdir -p {}'.format(out_folder))
 
         for i in range(len(protocols)):
-            output_fn = os.path.join(out_folder, protocols[i] + '.nii.gz')
+            output_fn = os.path.join(out_folder, protocols[i] +  '.nii.gz')
             new_sitk = sitk.GetImageFromArray(preds[i].astype(np.int32))
             new_sitk.CopyInformation(output['sitk'])
             sitk.WriteImage(new_sitk, output_fn)
 
         # Print outputs
         print('ID={}; input_dim={}; time={};'.format(
-            output['img_id'], img.shape, time.time()-t0))
+            output['img_id'], img.shape, time.time() - t0))
 
 
 if __name__ == '__main__':
@@ -107,10 +106,10 @@ if __name__ == '__main__':
 
     # GPU allocation options
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_devices
-    
+
     # Parse the run config
     with open(args.config) as f:
         config = json.load(f)
-        
+
     # Call training
     predict(args, config)
