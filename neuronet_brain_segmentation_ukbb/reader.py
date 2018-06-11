@@ -71,7 +71,7 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
         5
     """
     malpem_tissue_ids = range(6)
-        
+
     """
         MALP-EM ids:
         0 Background
@@ -235,13 +235,14 @@ def map_labels(lbl, protocol=None, convert_to_protocol=False):
     if convert_to_protocol:
         # map from consecutive ints to protocol labels
         for i in range(len(ids)):
-            out_lbl[lbl==i] = ids[i]
+            out_lbl[lbl == i] = ids[i]
     else:
         # map from protocol labels to consecutive ints
         for i in range(len(ids)):
-            out_lbl[lbl==ids[i]] = i
+            out_lbl[lbl == ids[i]] = i
 
     return out_lbl
+
 
 def read_fn(file_references, mode, params=None):
     """A custom python read function for interfacing with nii image files.
@@ -262,7 +263,7 @@ def read_fn(file_references, mode, params=None):
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         np.random.shuffle(file_references)
-        
+
     for f in file_references:
 
         # Read the image nii with sitk
@@ -304,16 +305,16 @@ def read_fn(file_references, mode, params=None):
                 img_lbls_list,
                 example_size=params['example_size'],
                 n_examples=params['n_examples'])
-                        
-            # Yield each image example and corresponding label protocols 
+
+            # Yield each image example and corresponding label protocols
             for e in range(params['n_examples']):
                 yield {'features': {'x': img_lbls_list[0][e].astype(np.float32)},
                        'labels': {params['protocols'][i]: img_lbls_list[1 + i][e]
                                   for i in range(len(params['protocols']))}}
         else:
             yield {'features': {'x': img},
-                   'labels': {params['protocols'][i]: lbls[i]
-                                  for i in range(len(params['protocols']))},
+                   'labels': {params['protocols'][i]: 
+                              lbls[i] for i in range(len(params['protocols']))},
                    'sitk': img_sitk,
                    'img_id': img_id}
     return

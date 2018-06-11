@@ -38,7 +38,6 @@ def predict(args, config):
     # Fetch the output probability ops of the trained network
     y_probs = [my_predictor._fetch_tensors['y_prob_{}'.format(p)] for p in protocols]
 
-
     # Iterate through the files, predict on the full volumes and
     #  compute a Dice similariy coefficient
     for output in read_fn(file_references=file_names,
@@ -75,7 +74,7 @@ def predict(args, config):
         os.system('mkdir -p {}'.format(out_folder))
 
         for i in range(len(protocols)):
-            output_fn = os.path.join(out_folder, protocols[i] +  '.nii.gz')
+            output_fn = os.path.join(out_folder, protocols[i] + '.nii.gz')
             new_sitk = sitk.GetImageFromArray(preds[i].astype(np.int32))
             new_sitk.CopyInformation(output['sitk'])
             sitk.WriteImage(new_sitk, output_fn)

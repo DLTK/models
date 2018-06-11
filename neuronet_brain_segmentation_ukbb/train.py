@@ -58,9 +58,9 @@ def model_fn(features, labels, mode, params):
     # 2. set up a loss function
     ce = []
     for p in protocols:
-ce.append(tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits=net_output_ops['logits_{}'.format(p)],
-                labels=labels[p])))
+        ce.append(tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits=net_output_ops['logits_{}'.format(p)],
+            labels=labels[p])))
 
     # Sum the crossentropy losses and divide through number of protocols to be predicted
     loss = tf.div(tf.add_n(ce), tf.constant(len(protocols), dtype=tf.float32))
@@ -75,10 +75,10 @@ ce.append(tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
 
     # 4.1 (optional) create custom image summaries for tensorboard
     my_image_summaries = {}
-    my_image_summaries['feat_t1'] = features['x'][0,64,:,:,0]
+    my_image_summaries['feat_t1'] = features['x'][0, 64, :, :, 0]
     for p in protocols:
-        my_image_summaries['{}/lbl'.format(p)] = tf.cast(labels[p], tf.float32)[0,64,:,:]
-        my_image_summaries['{}/pred'.format(p)] = tf.cast(net_output_ops['y_{}'.format(p)], tf.float32)[0,64,:,:]
+        my_image_summaries['{}/lbl'.format(p)] = tf.cast(labels[p], tf.float32)[0, 64, :, :]
+        my_image_summaries['{}/pred'.format(p)] = tf.cast(net_output_ops['y_{}'.format(p)], tf.float32)[0, 64, :, :]
 
     expected_output_size = [1, 128, 128, 1]  # [B, W, H, C]
     [tf.summary.image(name, tf.reshape(image, expected_output_size))
@@ -125,12 +125,12 @@ def train(args, config):
         'labels': {p: reader_params['example_size'] for p in config["protocols"]}}
 
     reader = Reader(read_fn,
-                    {'features': {'x': tf.float32}, 
-                    'labels': {p: tf.int32 for p in config["protocols"]}})
+                    {'features': {'x': tf.float32},
+                     'labels': {p: tf.int32 for p in config["protocols"]}})
 
     # Get input functions and queue initialisation hooks for training and validation data
     train_input_fn, train_qinit_hook = reader.get_inputs(
-        train_filenames, 
+        train_filenames,
         tf.estimator.ModeKeys.TRAIN,
         example_shapes=reader_example_shapes,
         batch_size=BATCH_SIZE,
@@ -138,9 +138,9 @@ def train(args, config):
         params=reader_params)
 
     val_input_fn, val_qinit_hook = reader.get_inputs(
-        val_filenames, 
+        val_filenames,
         tf.estimator.ModeKeys.EVAL,
-        example_shapes=reader_example_shapes, 
+        example_shapes=reader_example_shapes,
         batch_size=BATCH_SIZE,
         shuffle_cache_size=SHUFFLE_CACHE_SIZE,
         params=reader_params)
@@ -148,7 +148,7 @@ def train(args, config):
     # Instantiate the neural network estimator
     nn = tf.estimator.Estimator(model_fn=model_fn,
                                 model_dir=config["model_path"],
-                                params=config, 
+                                params=config,
                                 config=tf.estimator.RunConfig(session_config=tf.ConfigProto()))
 
     # Hooks for validation summaries
@@ -161,10 +161,10 @@ def train(args, config):
     try:
         for _ in range(MAX_STEPS // EVAL_EVERY_N_STEPS):
             nn.train(input_fn=train_input_fn,
-                     hooks=[train_qinit_hook, step_cnt_hook], 
+                     hooks=[train_qinit_hook, step_cnt_hook],
                      steps=EVAL_EVERY_N_STEPS)
 
-            results_val = nn.evaluate(input_fn=val_input_fn, 
+            results_val = nn.evaluate(input_fn=val_input_fn,
                                       hooks=[val_qinit_hook, val_summary_hook],
                                       steps=EVAL_STEPS)
             print('Step = {}; val loss = {:.5f};'.format(results_val['global_step'], results_val['loss']))
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='0')
-    
+
     parser.add_argument('--train_csv', default='train.csv')
     parser.add_argument('--val_csv', default='val.csv')
     parser.add_argument('--config', default='config.json')
