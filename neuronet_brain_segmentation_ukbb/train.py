@@ -33,7 +33,7 @@ MAX_STEPS = 100000
 # MODEL
 def model_fn(features, labels, mode, params):
 
-    # 1. create a model and its outputs    
+    # 1. create a model and its outputs
     def lrelu(x):
         return leaky_relu(x, 0.1)
 
@@ -108,7 +108,7 @@ def train(args, config):
                                   keep_default_na=False,
                                   na_values=[]).as_matrix()
 
-    val_filenames = pd.read_csv(args.val_csv, 
+    val_filenames = pd.read_csv(args.val_csv,
                                 dtype=object,
                                 keep_default_na=False,
                                 na_values=[]).as_matrix()
@@ -121,7 +121,7 @@ def train(args, config):
         'protocols': config["protocols"]}
 
     reader_example_shapes = {
-        'features': {'x': reader_params['example_size'] + [NUM_CHANNELS,]},
+        'features': {'x': reader_params['example_size'] + [NUM_CHANNELS,]}, 
         'labels': {p: reader_params['example_size'] for p in config["protocols"]}}
 
     reader = Reader(read_fn,
