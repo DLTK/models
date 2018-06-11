@@ -9,7 +9,6 @@ If there are any issues please contact the corresponding author of this implemen
   title={NeuroNet: Fast and Robust Reproduction of Multiple Brain Image Segmentation Pipelines},
   author={Martin Rajchl and Nick Pawlowski and Daniel Rueckert and Paul M. Matthews and Ben Glocker},
  booktitle={International conference on Medical Imaging with Deep Learning (MIDL)},
-  pages={},
   year={2018}
 }
 ```
@@ -65,5 +64,3 @@ To deploy a model and run inference, run the deploy.py script and point to the m
   ```
   python deploy.py -p path/to/saved/model -c CUDA_DEVICE --config MY_CONFIG
   ```
-
-Please note, that this implementation imports saved models via [tf.estimator.Estimator.export_savedmodel](https://www.tensorflow.org/api_docs/python/tf/estimator/Estimator#export_savedmodel) and during deploy parses the path to the saved model and not to the save path specified for  [tf.estimator.Estimator.export_savedmodel](https://www.tensorflow.org/api_docs/python/tf/estimator/Estimator#export_savedmodel). For prediction of data without labels use the `-n` flag
