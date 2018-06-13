@@ -1,8 +1,8 @@
 {
  "protocols": ["fsl_first"],
  "num_classes": [16], 
- "model_path": "/vol/biomedic2/mrajchl/data/neuronet/models/fsl_first/0",
- "out_segm_path": "/vol/biomedic2/mrajchl/data/neuronet/out/fsl_first/0",
+ "model_path": "/tmp/neuronet/models/fsl_first",
+ "out_segm_path": "/tmp/neuronet/out/fsl_first",
  "learning_rate": 0.001,
  "network": {
      "filters": [16, 32, 64, 128],

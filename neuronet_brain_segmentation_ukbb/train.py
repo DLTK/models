@@ -89,11 +89,16 @@ def model_fn(features, labels, mode, params):
         p = protocols[i]
         c = tf.constant(params["num_classes"][i])
 
-        mean_dice = tf.reduce_mean(tf.py_func(dice, [net_output_ops['y_{}'.format(p)], labels[p], c], tf.float32)[1:])
+        mean_dice = tf.reduce_mean(tf.py_func(
+            dice, [net_output_ops['y_{}'.format(p)], labels[p], c], tf.float32)[1:])
         tf.summary.scalar('dsc_{}'.format(p), mean_dice)
 
     # 5. Return EstimatorSpec object
-    return tf.estimator.EstimatorSpec(mode=mode, predictions=None, loss=loss, train_op=train_op, eval_metric_ops=None)
+    return tf.estimator.EstimatorSpec(mode=mode,
+                                      predictions=None,
+                                      loss=loss,
+                                      train_op=train_op,
+                                      eval_metric_ops=None)
 
 
 def train(args, config):
@@ -189,7 +194,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--train_csv', default='train.csv')
     parser.add_argument('--val_csv', default='val.csv')
-    parser.add_argument('--config', default='config.json')
+    parser.add_argument('--config', default='config_all.json')
 
     args = parser.parse_args()
 

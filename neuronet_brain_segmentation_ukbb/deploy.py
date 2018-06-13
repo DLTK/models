@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--cuda_devices', '-c', default='0')
 
     parser.add_argument('--csv', default='test.csv')
-    parser.add_argument('--config', default='config.json')
+    parser.add_argument('--config', default='config_all.json')
 
     args = parser.parse_args()
 
