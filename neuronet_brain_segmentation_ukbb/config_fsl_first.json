@@ -1,0 +1,12 @@
+{
+ "protocols": ["fsl_first"],
+ "num_classes": [16], 
+ "model_path": "/tmp/neuronet/models/fsl_first",
+ "out_segm_path": "/tmp/neuronet/out/fsl_first",
+ "learning_rate": 0.001,
+ "network": {
+     "filters": [16, 32, 64, 128],
+     "strides": [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
+     "num_residual_units": 2
+  }
+}

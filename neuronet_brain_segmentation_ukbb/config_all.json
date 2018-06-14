@@ -1,0 +1,12 @@
+{
+ "protocols": ["fsl_fast", "fsl_first", "spm_tissue", "malp_em", "malp_em_tissue"],
+ "num_classes": [4, 16, 4, 139, 6], 
+ "model_path": "/tmp/neuronet/models/neuronet_all",
+ "out_segm_path": "/tmp/neuronet/out/neuronet_all",
+ "learning_rate": 0.001,
+ "network": {
+     "filters": [16, 32, 64, 128],
+     "strides": [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
+     "num_residual_units": 2
+  }
+}
