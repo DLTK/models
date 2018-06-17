@@ -20,7 +20,7 @@ import json
 
 # PARAMS
 EVAL_EVERY_N_STEPS = 1000
-EVAL_STEPS = 10
+EVAL_STEPS = 1
 
 NUM_CHANNELS = 1
 
@@ -89,8 +89,9 @@ def model_fn(features, labels, mode, params):
         p = protocols[i]
         c = tf.constant(params["num_classes"][i])
 
-        mean_dice = tf.reduce_mean(tf.py_func(
-            dice, [net_output_ops['y_{}'.format(p)], labels[p], c], tf.float32)[1:])
+        mean_dice = tf.py_func(
+            lambda pred, lbl, classes: np.nanmean(dice(pred, lbl, classes)[1:]),
+            [net_output_ops['y_{}'.format(p)], labels[p], c], tf.float32)
         tf.summary.scalar('dsc_{}'.format(p), mean_dice)
 
     # 5. Return EstimatorSpec object

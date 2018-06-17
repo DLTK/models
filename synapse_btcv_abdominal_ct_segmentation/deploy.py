@@ -68,7 +68,7 @@ def predict(args):
         if not args.predict_only:
             lbl = np.expand_dims(output['labels']['y'], axis=0)
             # Calculate the Dice coefficient
-            dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
+            dsc = np.nanmean(metrics.dice(pred, lbl, num_classes)[1:])
 
         # Save the file as .nii.gz using the header information from the
         # original sitk image
